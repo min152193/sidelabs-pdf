@@ -45,6 +45,7 @@ function getIconSvg(name, customClass = '') {
 let queue = [];
 let uploadedFiles = {};
 let filePasswords = {};
+let loadedDocsPdfLib = {}; // Global PDFDocument cache to prevent reloading and detached buffer crashes
 let activeTab = 'tab-merge';
 let splitMode = 'all';
 let currentLang = localStorage.getItem('lang') || 'en';
@@ -250,9 +251,9 @@ const translations = {
         format_jpg: "JPEG 이미지 (.jpg)",
         format_png: "PNG 이미지 (.png)",
         
-        toast_no_valid: "유효한 파일이 감지되지 않았습니다. PDF, JPEG, PNG 파일만 지원합니다.",
-        toast_skipped_dup: "일부 중복 파일이 대기열에서 제외되었습니다.",
-        toast_load_fail: "파일을 완전히 로드하지 못했습니다.",
+        toast_no_valid: "No valid files detected. Drop PDF, JPEG, or PNG files only.",
+        toast_skipped_dup: "Some files were already in the queue and were skipped.",
+        toast_load_fail: "Failed to load files fully.",
         toast_parse_fail: "\"{0}\" 분석 실패: {1}",
         toast_download_success: "제한이 해제된 PDF 다운로드가 완료되었습니다!",
         toast_merge_success: "스타일이 적용된 PDF 다운로드가 완료되었습니다!",
@@ -281,7 +282,7 @@ const translations = {
         sorting_pipeline: "이름순으로 정렬하는 중...",
         compiling_pdf: "PDF 컴파일 중...",
         unlocking_assembling: "페이지 잠금 해제 및 어셈블리 중 ({0}/{1})...",
-        stamping_watermark: "워터마크 스탬프 찍는 중...",
+        stamping_watermark: "워터마크 스탬기 중...",
         stamping_watermark_sub: "사용자 정의 대각선 워터마크 텍스트 오버레이 중...",
         numbering_pages: "페이지 번호 매기는 중...",
         numbering_pages_sub: "문서 바닥글 마커 도장 찍는 중...",
@@ -380,7 +381,14 @@ function initLanguage() {
     const langSelect = document.getElementById('lang-select');
     if (!langSelect) return;
 
-    const savedLang = localStorage.getItem('lang') || 'en';
+    // Auto-detect browser language, defaulting to ko if applicable
+    let defaultLang = 'en';
+    const browserLang = (navigator.language || '').toLowerCase();
+    if (browserLang.startsWith('ko')) {
+        defaultLang = 'ko';
+    }
+
+    const savedLang = localStorage.getItem('lang') || defaultLang;
     langSelect.value = savedLang;
     currentLang = savedLang;
 
@@ -642,6 +650,7 @@ function initializeAccordion() {
     });
 }
 
+// Collapsible switches handler
 function setupSettingToggles() {
     const configs = [
         { checkboxId: 'toggle-watermark', bodyId: 'watermark-options' },
@@ -860,7 +869,7 @@ async function handleUploadedFiles(files) {
                         updateLoadingProgress(percent);
                     }
                 };
-                reader.onload = () => resolve(reader.result);
+                reader.onload = () => resolve(new Uint8Array(reader.result)); // RAM optimization: store as Uint8Array directly
                 reader.onerror = () => reject(new Error("File read error"));
                 reader.readAsArrayBuffer(file);
             });
@@ -868,8 +877,8 @@ async function handleUploadedFiles(files) {
             uploadedFiles[fileId] = arrayBuffer;
 
             if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-                // Detached Safeguard: slice(0) copies buffer before passing to PDFJS
-                await parseAndAddPDFToQueue(arrayBuffer.slice(0), file.name, fileId);
+                // Pass buffer directly - no copies!
+                await parseAndAddPDFToQueue(arrayBuffer, file.name, fileId);
             } else if (file.type.startsWith('image/')) {
                 await parseAndAddImageToQueue(file, fileId, arrayBuffer);
             }
@@ -885,24 +894,54 @@ async function handleUploadedFiles(files) {
     }
 }
 
+function sanitizePdfHeader(arrayBuffer) {
+    const uint8 = new Uint8Array(arrayBuffer);
+    const limit = Math.min(uint8.length, 1024);
+    let startIndex = -1;
+    for (let i = 0; i < limit - 4; i++) {
+        if (uint8[i] === 37 && uint8[i+1] === 80 && uint8[i+2] === 68 && uint8[i+3] === 70 && uint8[i+4] === 45) {
+            startIndex = i;
+            break;
+        }
+    }
+    
+    if (startIndex > 0) {
+        console.log(`PDF header found at index ${startIndex}. Trimming leading garbage bytes...`);
+        return arrayBuffer.slice(startIndex);
+    }
+    return arrayBuffer;
+}
+
 async function parseAndAddPDFToQueue(arrayBuffer, fileName, fileId) {
-    let pdfDoc = null;
+    // 1. Sanitize Header
+    arrayBuffer = sanitizePdfHeader(arrayBuffer);
+
+    // 2. Automated Edit Restriction Removal Logic
+    try {
+        const tempDoc = await PDFDocument.load(arrayBuffer);
+        const permissionFreeBytes = await tempDoc.save();
+        arrayBuffer = permissionFreeBytes;
+        uploadedFiles[fileId] = arrayBuffer; // update stored buffer with the permission-free copy
+    } catch (e) {
+        console.log("PDF requires password decryption:", e.message);
+    }
+
+    let pdfDoc = null; // PDF.js doc
     let userPassword = null;
     let success = false;
 
+    // Load PDF-Lib document FIRST and cache it to prevent subsequent reload and detached ArrayBuffer crashes!
+    let pdfLibDoc = null;
     while (!success) {
         try {
             updateLoading(t('loading_files') + ` (${fileName})`, "Parsing document...");
-            // Detached Safeguard: slice(0) copies the buffer for each password try
-            const bufferForWorker = arrayBuffer.slice(0);
-            if (userPassword !== null) {
-                pdfDoc = await pdfjsLib.getDocument({ data: bufferForWorker, password: userPassword }).promise;
-            } else {
-                pdfDoc = await pdfjsLib.getDocument({ data: bufferForWorker }).promise;
-            }
+            // Load buffer directly - no copies!
+            pdfLibDoc = await PDFDocument.load(arrayBuffer, { password: userPassword || undefined });
+            // If PDF-Lib succeeds, load via PDFJS
+            pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer, password: userPassword || undefined }).promise;
             success = true;
         } catch (error) {
-            const isPasswordErr = error.name === 'PasswordException' || error.code === 1;
+            const isPasswordErr = error.name === 'PasswordException' || error.code === 1 || error.message.includes('password') || error.message.includes('decrypt');
             if (isPasswordErr) {
                 userPassword = await getPdfPasswordModal(fileName, userPassword !== null);
                 if (userPassword === null) {
@@ -921,6 +960,9 @@ async function parseAndAddPDFToQueue(arrayBuffer, fileName, fileId) {
         filePasswords[fileId] = userPassword; 
         showToast("success", t("toast_unlock_success"));
     }
+
+    // Cache the loaded PDF-Lib document globally
+    loadedDocsPdfLib[fileId] = pdfLibDoc;
 
     const pageCount = pdfDoc.numPages;
     const pendingPages = [];
@@ -941,7 +983,6 @@ async function parseAndAddPDFToQueue(arrayBuffer, fileName, fileId) {
         pendingPages.push(queueItem);
     }
 
-    // Render previews sequentially using the loaded pdfDoc
     for (const item of pendingPages) {
         try {
             const page = await pdfDoc.getPage(item.pageIndex + 1);
@@ -985,6 +1026,11 @@ async function parseAndAddPDFToQueue(arrayBuffer, fileName, fileId) {
             }
         }
     }
+    
+    // Clean up pdf.js worker threads memory
+    try {
+        if (pdfDoc) pdfDoc.destroy();
+    } catch(e) {}
 }
 
 async function parseAndAddImageToQueue(file, fileId, arrayBuffer) {
@@ -1009,7 +1055,224 @@ async function parseAndAddImageToQueue(file, fileId, arrayBuffer) {
     queue.push(queueItem);
 }
 
-// Grid layout render
+// Processing Filters logic
+function stripOcrTextFromContentStream(contents) {
+    const textDecoder = new TextDecoder('latin1');
+    const textEncoder = new TextEncoder();
+    const contentStr = textDecoder.decode(contents);
+    
+    // Match and remove only BT...ET blocks containing "3 Tr" (invisible text rendering mode)
+    // to target transparent OCR text paths while preserving all normal vector typography.
+    const ocrBlockRegex = /BT(?:(?!BT|ET)[\s\S])*?3\s+Tr(?:(?!BT|ET)[\s\S])*?ET/g;
+    const cleanedStr = contentStr.replace(ocrBlockRegex, '');
+    
+    return textEncoder.encode(cleanedStr);
+}
+
+function stripOcrTextFromPage(page) {
+    try {
+        const contents = page.node.Contents();
+        if (!contents) return;
+
+        if (contents instanceof PDFArray) {
+            for (let i = 0; i < contents.size(); i++) {
+                const stream = page.node.context.lookup(contents.get(i));
+                if (stream instanceof PDFRawStream) {
+                    const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
+                    const cleaned = stripOcrTextFromContentStream(uncompressed);
+                    stream.contents = cleaned;
+                    stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
+                    stream.dict.delete(PDFName.of('Filter'));
+                }
+            }
+        } else {
+            const stream = page.node.context.lookup(contents);
+            if (stream instanceof PDFRawStream) {
+                const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
+                const cleaned = stripOcrTextFromContentStream(uncompressed);
+                stream.contents = cleaned;
+                stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
+                stream.dict.delete(PDFName.of('Filter'));
+            }
+        }
+    } catch (e) {
+        console.warn("Failed to strip OCR stream from page:", e);
+    }
+}
+
+function convertContentStreamToGrayscale(contents) {
+    const textDecoder = new TextDecoder('latin1');
+    const textEncoder = new TextEncoder();
+    let contentStr = textDecoder.decode(contents);
+
+    // Map RGB color operators (rg/RG) to Grayscale (g/G) operators
+    contentStr = contentStr.replace(/(\d*\.?\d+)\s+(\d*\.?\d+)\s+(\d*\.?\d+)\s+(rg|RG)/g, (match, rStr, gStr, bStr, op) => {
+        const r = parseFloat(rStr);
+        const g = parseFloat(gStr);
+        const b = parseFloat(bStr);
+        const gray = (0.299 * r + 0.587 * g + 0.114 * b).toFixed(3);
+        const newOp = op === 'rg' ? 'g' : 'G';
+        return `${gray} ${newOp}`;
+    });
+
+    return textEncoder.encode(contentStr);
+}
+
+function convertPageToGrayscale(page) {
+    try {
+        const contents = page.node.Contents();
+        if (!contents) return;
+
+        if (contents instanceof PDFArray) {
+            for (let i = 0; i < contents.size(); i++) {
+                const stream = page.node.context.lookup(contents.get(i));
+                if (stream instanceof PDFRawStream) {
+                    const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
+                    const cleaned = convertContentStreamToGrayscale(uncompressed);
+                    stream.contents = cleaned;
+                    stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
+                    stream.dict.delete(PDFName.of('Filter'));
+                }
+            }
+        } else {
+            const stream = page.node.context.lookup(contents);
+            if (stream instanceof PDFRawStream) {
+                const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
+                const cleaned = convertContentStreamToGrayscale(uncompressed);
+                stream.contents = cleaned;
+                stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
+                stream.dict.delete(PDFName.of('Filter'));
+            }
+        }
+    } catch (e) {
+        console.warn("Failed to convert page color space to grayscale:", e);
+    }
+}
+
+function flattenVectorInkContentStream(contents) {
+    const textDecoder = new TextDecoder('latin1');
+    const textEncoder = new TextEncoder();
+    let contentStr = textDecoder.decode(contents);
+
+    // Combine adjacent path draw operators (S/s followed by m)
+    contentStr = contentStr.replace(/S\s+(\d*\.?\d+)\s+(\d*\.?\d+)\s+m/g, ' $1 $2 m');
+    contentStr = contentStr.replace(/s\s+(\d*\.?\d+)\s+(\d*\.?\d+)\s+m/g, ' $1 $2 m');
+
+    return textEncoder.encode(contentStr);
+}
+
+function flattenVectorInkOnPage(page) {
+    try {
+        const contents = page.node.Contents();
+        if (!contents) return;
+
+        if (contents instanceof PDFArray) {
+            for (let i = 0; i < contents.size(); i++) {
+                const stream = page.node.context.lookup(contents.get(i));
+                if (stream instanceof PDFRawStream) {
+                    const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
+                    const cleaned = flattenVectorInkContentStream(uncompressed);
+                    stream.contents = cleaned;
+                    stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
+                    stream.dict.delete(PDFName.of('Filter'));
+                }
+            }
+        } else {
+            const stream = page.node.context.lookup(contents);
+            if (stream instanceof PDFRawStream) {
+                const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
+                const cleaned = flattenVectorInkContentStream(uncompressed);
+                stream.contents = cleaned;
+                stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
+                stream.dict.delete(PDFName.of('Filter'));
+            }
+        }
+    } catch (e) {
+        console.warn("Failed to flatten vector ink paths:", e);
+    }
+}
+
+// Re-compress embedded PDF Image XObject
+async function recompressImageXObject(pdfDoc, xObject, quality, grayscaleEnabled, blurEnabled, canvasesToClean, objectUrlsToRevoke) {
+    try {
+        const filterObj = xObject.dict.get(PDFName.of('Filter'));
+        let isDCT = false;
+        if (filterObj instanceof PDFName) {
+            isDCT = filterObj.decode() === 'DCTDecode';
+        } else if (filterObj instanceof PDFArray) {
+            isDCT = filterObj.asArray().some(f => f instanceof PDFName && f.decode() === 'DCTDecode');
+        }
+        
+        if (!isDCT) return; 
+
+        const bytes = xObject.contents; 
+        
+        const compressedBytes = await new Promise((resolve, reject) => {
+            const blob = new Blob([bytes], { type: 'image/jpeg' });
+            const url = URL.createObjectURL(blob);
+            if (objectUrlsToRevoke) objectUrlsToRevoke.push(url);
+            
+            const img = new Image();
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                
+                let width = img.width;
+                let height = img.height;
+                const maxDim = quality >= 0.85 ? 2400 : 1200; // Smart Resolution Threshold
+                if (width > maxDim || height > maxDim) {
+                    if (width > height) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    } else {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                if (canvasesToClean) canvasesToClean.push(canvas);
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                
+                if (grayscaleEnabled) {
+                    ctx.filter = 'grayscale(100%)';
+                }
+                if (blurEnabled) {
+                    const blurRadius = Math.max(0, (1.0 - quality) * 10);
+                    if (blurRadius > 0) {
+                        ctx.filter = grayscaleEnabled 
+                            ? `grayscale(100%) blur(${blurRadius}px)` 
+                            : `blur(${blurRadius}px)`;
+                    }
+                }
+                
+                ctx.drawImage(img, 0, 0, width, height);
+                canvas.toBlob((compressedBlob) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(new Uint8Array(reader.result));
+                    reader.readAsArrayBuffer(compressedBlob);
+                    canvas.width = 0;
+                    canvas.height = 0; 
+                }, 'image/jpeg', quality);
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                reject(new Error("Image decode failed"));
+            };
+            img.src = url;
+        });
+
+        xObject.contents = compressedBytes;
+        xObject.dict.set(PDFName.of('Filter'), PDFName.of('DCTDecode'));
+        xObject.dict.set(PDFName.of('Length'), PDFNumber.of(compressedBytes.length));
+        xObject.dict.delete(PDFName.of('DecodeParms'));
+    } catch (err) {
+        console.warn("Failed to re-compress image XObject:", err);
+    }
+}
+
+// Queue list rendering, single rotations & deletions
 function renderQueueGrid() {
     const grid = document.getElementById('preview-grid');
     if (!grid) return;
@@ -1056,7 +1319,7 @@ function renderQueueGrid() {
             previewHtml = `
                 <div class="rendering-placeholder">
                     <div class="skeleton-spinner"></div>
-                    <span style="font-size:0.7rem; color:var(--text-muted)">Rendering...</span>
+                    <span style="font-size:0.7rem; color:var(--text-muted)" data-i18n="rendering">Rendering...</span>
                 </div>
             `;
         }
@@ -1087,16 +1350,19 @@ function renderQueueGrid() {
 
         card.querySelector('.btn-rotate-ccw').addEventListener('click', (e) => {
             e.stopPropagation();
+            e.preventDefault();
             rotatePage(item.id, -90);
         });
 
         card.querySelector('.btn-rotate-cw').addEventListener('click', (e) => {
             e.stopPropagation();
+            e.preventDefault();
             rotatePage(item.id, 90);
         });
 
         card.querySelector('.btn-delete').addEventListener('click', (e) => {
             e.stopPropagation();
+            e.preventDefault();
             deletePage(item.id);
         });
 
@@ -1182,6 +1448,7 @@ async function clearQueue() {
             queue = [];
             uploadedFiles = {};
             filePasswords = {};
+            loadedDocsPdfLib = {}; // Clear global cache references
             const rangeInput = document.getElementById('extract-range');
             if (rangeInput) rangeInput.value = '';
             renderQueueGrid();
@@ -1263,267 +1530,6 @@ function getMatchedIndices() {
     return matched;
 }
 
-// Image compression canvas pipeline
-async function compressImageBuffer(arrayBuffer, mimeType, maxDimension = 1200, quality = 0.9) {
-    return new Promise((resolve) => {
-        const blob = new Blob([arrayBuffer], { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        const img = new Image();
-        img.onload = () => {
-            URL.revokeObjectURL(url);
-            let width = img.width;
-            let height = img.height;
-            
-            const maxDim = quality >= 0.85 ? 2400 : maxDimension;
-            if (width > maxDim || height > maxDim) {
-                if (width > height) {
-                    height = Math.round((height * maxDim) / width);
-                    width = maxDim;
-                } else {
-                    width = Math.round((width * maxDim) / height);
-                    height = maxDim;
-                }
-            }
-            
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            canvas.toBlob((compressedBlob) => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    resolve(reader.result); 
-                };
-                reader.readAsArrayBuffer(compressedBlob);
-                canvas.width = 0;
-                canvas.height = 0; 
-            }, 'image/jpeg', quality);
-        };
-        img.onerror = () => {
-            URL.revokeObjectURL(url);
-            resolve(arrayBuffer); 
-        };
-        img.src = url;
-    });
-}
-
-// Processing Filters logic
-function stripOcrTextFromContentStream(contents) {
-    const textDecoder = new TextDecoder('latin1');
-    const textEncoder = new TextEncoder();
-    const contentStr = textDecoder.decode(contents);
-    
-    // Match and remove only BT...ET blocks containing "3 Tr" (invisible text rendering mode)
-    // to target transparent OCR text paths while preserving all normal vector typography.
-    const ocrBlockRegex = /BT(?:(?!BT|ET)[\s\S])*?3\s+Tr(?:(?!BT|ET)[\s\S])*?ET/g;
-    const cleanedStr = contentStr.replace(ocrBlockRegex, '');
-    
-    return textEncoder.encode(cleanedStr);
-}
-
-function stripOcrTextFromPage(page) {
-    try {
-        const contents = page.node.Contents();
-        if (!contents) return;
-
-        if (contents instanceof PDFArray) {
-            for (let i = 0; i < contents.size(); i++) {
-                const stream = page.node.context.lookup(contents.get(i));
-                if (stream instanceof PDFRawStream) {
-                    const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
-                    const cleaned = stripOcrTextFromContentStream(uncompressed);
-                    stream.contents = cleaned;
-                    stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
-                    stream.dict.delete(PDFName.of('Filter'));
-                }
-            }
-        } else {
-            const stream = page.node.context.lookup(contents);
-            if (stream instanceof PDFRawStream) {
-                const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
-                const cleaned = stripOcrTextFromContentStream(uncompressed);
-                stream.contents = cleaned;
-                stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
-                stream.dict.delete(PDFName.of('Filter'));
-            }
-        }
-    } catch (e) {
-        console.warn("Failed to strip OCR stream from page:", e);
-    }
-}
-
-function convertContentStreamToGrayscale(contents) {
-    const textDecoder = new TextDecoder('latin1');
-    const textEncoder = new TextEncoder();
-    let contentStr = textDecoder.decode(contents);
-
-    contentStr = contentStr.replace(/(\d*\.?\d+)\s+(\d*\.?\d+)\s+(\d*\.?\d+)\s+(rg|RG)/g, (match, rStr, gStr, bStr, op) => {
-        const r = parseFloat(rStr);
-        const g = parseFloat(gStr);
-        const b = parseFloat(bStr);
-        const gray = (0.299 * r + 0.587 * g + 0.114 * b).toFixed(3);
-        const newOp = op === 'rg' ? 'g' : 'G';
-        return `${gray} ${newOp}`;
-    });
-
-    return textEncoder.encode(contentStr);
-}
-
-function convertPageToGrayscale(page) {
-    try {
-        const contents = page.node.Contents();
-        if (!contents) return;
-
-        if (contents instanceof PDFArray) {
-            for (let i = 0; i < contents.size(); i++) {
-                const stream = page.node.context.lookup(contents.get(i));
-                if (stream instanceof PDFRawStream) {
-                    const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
-                    const cleaned = convertContentStreamToGrayscale(uncompressed);
-                    stream.contents = cleaned;
-                    stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
-                    stream.dict.delete(PDFName.of('Filter'));
-                }
-            }
-        } else {
-            const stream = page.node.context.lookup(contents);
-            if (stream instanceof PDFRawStream) {
-                const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
-                const cleaned = convertContentStreamToGrayscale(uncompressed);
-                stream.contents = cleaned;
-                stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
-                stream.dict.delete(PDFName.of('Filter'));
-            }
-        }
-    } catch (e) {
-        console.warn("Failed to convert page color space to grayscale:", e);
-    }
-}
-
-function flattenVectorInkContentStream(contents) {
-    const textDecoder = new TextDecoder('latin1');
-    const textEncoder = new TextEncoder();
-    let contentStr = textDecoder.decode(contents);
-
-    contentStr = contentStr.replace(/S\s+(\d*\.?\d+)\s+(\d*\.?\d+)\s+m/g, ' $1 $2 m');
-    contentStr = contentStr.replace(/s\s+(\d*\.?\d+)\s+(\d*\.?\d+)\s+m/g, ' $1 $2 m');
-
-    return textEncoder.encode(contentStr);
-}
-
-function flattenVectorInkOnPage(page) {
-    try {
-        const contents = page.node.Contents();
-        if (!contents) return;
-
-        if (contents instanceof PDFArray) {
-            for (let i = 0; i < contents.size(); i++) {
-                const stream = page.node.context.lookup(contents.get(i));
-                if (stream instanceof PDFRawStream) {
-                    const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
-                    const cleaned = flattenVectorInkContentStream(uncompressed);
-                    stream.contents = cleaned;
-                    stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
-                    stream.dict.delete(PDFName.of('Filter'));
-                }
-            }
-        } else {
-            const stream = page.node.context.lookup(contents);
-            if (stream instanceof PDFRawStream) {
-                const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
-                const cleaned = flattenVectorInkContentStream(uncompressed);
-                stream.contents = cleaned;
-                stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
-                stream.dict.delete(PDFName.of('Filter'));
-            }
-        }
-    } catch (e) {
-        console.warn("Failed to flatten vector ink paths:", e);
-    }
-}
-
-// Re-compress embedded PDF Image XObject
-async function recompressImageXObject(pdfDoc, xObject, quality, grayscaleEnabled, blurEnabled, canvasesToClean, objectUrlsToRevoke) {
-    try {
-        const filterObj = xObject.dict.get(PDFName.of('Filter'));
-        let isDCT = false;
-        if (filterObj instanceof PDFName) {
-            isDCT = filterObj.decode() === 'DCTDecode';
-        } else if (filterObj instanceof PDFArray) {
-            isDCT = filterObj.asArray().some(f => f instanceof PDFName && f.decode() === 'DCTDecode');
-        }
-        
-        if (!isDCT) return; 
-
-        const bytes = xObject.contents; 
-        
-        const compressedBytes = await new Promise((resolve, reject) => {
-            const blob = new Blob([bytes], { type: 'image/jpeg' });
-            const url = URL.createObjectURL(blob);
-            if (objectUrlsToRevoke) objectUrlsToRevoke.push(url);
-            
-            const img = new Image();
-            img.onload = () => {
-                URL.revokeObjectURL(url);
-                
-                let width = img.width;
-                let height = img.height;
-                const maxDim = quality >= 0.85 ? 2400 : 1200;
-                if (width > maxDim || height > maxDim) {
-                    if (width > height) {
-                        height = Math.round((height * maxDim) / width);
-                        width = maxDim;
-                    } else {
-                        width = Math.round((width * maxDim) / height);
-                        height = maxDim;
-                    }
-                }
-
-                const canvas = document.createElement('canvas');
-                if (canvasesToClean) canvasesToClean.push(canvas);
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                
-                if (grayscaleEnabled) {
-                    ctx.filter = 'grayscale(100%)';
-                }
-                if (blurEnabled) {
-                    const blurRadius = Math.max(0, (1.0 - quality) * 10);
-                    if (blurRadius > 0) {
-                        ctx.filter = grayscaleEnabled 
-                            ? `grayscale(100%) blur(${blurRadius}px)` 
-                            : `blur(${blurRadius}px)`;
-                    }
-                }
-                
-                ctx.drawImage(img, 0, 0, width, height);
-                canvas.toBlob((compressedBlob) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(new Uint8Array(reader.result));
-                    reader.readAsArrayBuffer(compressedBlob);
-                    canvas.width = 0;
-                    canvas.height = 0; 
-                }, 'image/jpeg', quality);
-            };
-            img.onerror = () => {
-                URL.revokeObjectURL(url);
-                reject(new Error("Image decode failed"));
-            };
-            img.src = url;
-        });
-
-        xObject.contents = compressedBytes;
-        xObject.dict.set(PDFName.of('Filter'), PDFName.of('DCTDecode'));
-        xObject.dict.set(PDFName.of('Length'), PDFNumber.of(compressedBytes.length));
-        xObject.dict.delete(PDFName.of('DecodeParms'));
-    } catch (err) {
-        console.warn("Failed to re-compress image XObject:", err);
-    }
-}
-
 // Export pipeline trigger
 async function processPDFExport() {
     if (queue.length === 0) {
@@ -1552,20 +1558,25 @@ async function processPDFExport() {
         }
     });
 
-    if (activeTab === 'tab-split') {
-        if (splitMode === 'all') {
-            await exportSplitAll();
-        } else if (splitMode === 'extract') {
-            const matched = getMatchedIndices();
-            if (matched.size === 0) {
-                showToast("error", t('toast_invalid_range'));
-                return;
+    console.time('PDF Processing');
+    try {
+        if (activeTab === 'tab-split') {
+            if (splitMode === 'all') {
+                await exportSplitAll();
+            } else if (splitMode === 'extract') {
+                const matched = getMatchedIndices();
+                if (matched.size === 0) {
+                    showToast("error", t('toast_invalid_range'));
+                    return;
+                }
+                const selectedItems = Array.from(matched).map(idx => queue[idx]);
+                await exportCombined(selectedItems, 'extracted.pdf');
             }
-            const selectedItems = Array.from(matched).map(idx => queue[idx]);
-            await exportCombined(selectedItems, 'extracted.pdf');
+        } else {
+            await exportCombined(queue, 'merged.pdf');
         }
-    } else {
-        await exportCombined(queue, 'merged.pdf');
+    } finally {
+        console.timeEnd('PDF Processing');
     }
 }
 
@@ -1574,7 +1585,6 @@ async function exportCombined(queueItems, defaultFileName) {
     showLoading(t('compiling_pdf'), t('unlocking_assembling', 0, queueItems.length));
     
     let outDoc = null;
-    const loadedDocsPdfLib = {}; 
     const totalItems = queueItems.length;
     const canvasesToClean = [];
     const objectUrlsToRevoke = [];
@@ -1583,6 +1593,9 @@ async function exportCombined(queueItems, defaultFileName) {
         outDoc = await PDFDocument.create();
 
         for (let idx = 0; idx < totalItems; idx++) {
+            // UI Thread Yielding: Keep UI responsive
+            await new Promise(resolve => setTimeout(resolve, 0));
+
             const item = queueItems[idx];
             updateLoading(t('unlocking_assembling', idx + 1, totalItems), item.originalName);
             updateLoadingProgress(Math.round((idx / totalItems) * 60)); 
@@ -1591,8 +1604,8 @@ async function exportCombined(queueItems, defaultFileName) {
                 if (!loadedDocsPdfLib[item.fileId]) {
                     const arrayBuffer = uploadedFiles[item.fileId];
                     const password = filePasswords[item.fileId] || "";
-                    // Detached Safeguard: slice(0) copies the buffer
-                    loadedDocsPdfLib[item.fileId] = await PDFDocument.load(arrayBuffer.slice(0), { password });
+                    // Load buffer directly - no copies!
+                    loadedDocsPdfLib[item.fileId] = await PDFDocument.load(arrayBuffer, { password });
                 }
                 const srcDoc = loadedDocsPdfLib[item.fileId];
                 const [copiedPage] = await outDoc.copyPages(srcDoc, [item.pageIndex]);
@@ -1655,6 +1668,7 @@ async function exportCombined(queueItems, defaultFileName) {
         const grayscaleEnabled = document.getElementById('toggle-grayscale')?.checked;
 
         for (let i = 0; i < totalPages; i++) {
+            await new Promise(resolve => setTimeout(resolve, 0)); // Yield
             const page = pages[i];
             if (stripOcrEnabled) {
                 stripOcrTextFromPage(page);
@@ -1670,11 +1684,11 @@ async function exportCombined(queueItems, defaultFileName) {
         // Apply smart embedded image compression (OR grayscale image colorspace replacement)
         const compressEnabled = document.getElementById('toggle-compress').checked;
         const quality = parseFloat(document.getElementById('compress-quality').value || '0.9');
-        const intelligentEnabled = document.getElementById('toggle-intelligent-compress')?.checked;
         
         if ((compressEnabled && quality < 1.0) || grayscaleEnabled) {
             updateLoading(t('compiling_pdf'), "Optimizing embedded image elements...");
             for (let i = 0; i < totalPages; i++) {
+                await new Promise(resolve => setTimeout(resolve, 0)); // Yield
                 const page = pages[i];
                 const resources = page.node.Resources();
                 if (resources) {
@@ -1685,7 +1699,7 @@ async function exportCombined(queueItems, defaultFileName) {
                             if (xObject instanceof PDFRawStream) {
                                 const subtype = xObject.dict.get(PDFName.of('Subtype'));
                                 if (subtype instanceof PDFName && subtype.decode() === 'Image') {
-                                    await recompressImageXObject(outDoc, xObject, compressEnabled ? quality : 1.0, grayscaleEnabled, intelligentEnabled, canvasesToClean, objectUrlsToRevoke);
+                                    await recompressImageXObject(outDoc, xObject, compressEnabled ? quality : 1.0, grayscaleEnabled, false, canvasesToClean, objectUrlsToRevoke);
                                 }
                             }
                         }
@@ -1708,6 +1722,7 @@ async function exportCombined(queueItems, defaultFileName) {
             const color = hexToRgbColor(colorHex);
 
             for (let i = 0; i < totalPages; i++) {
+                await new Promise(resolve => setTimeout(resolve, 0)); // Yield
                 updateLoadingProgress(60 + Math.round((i / totalPages) * 15)); 
                 const page = pages[i];
                 const { width, height } = page.getSize();
@@ -1735,6 +1750,7 @@ async function exportCombined(queueItems, defaultFileName) {
             const position = document.getElementById('numbering-position').value;
 
             for (let i = 0; i < totalPages; i++) {
+                await new Promise(resolve => setTimeout(resolve, 0)); // Yield
                 updateLoadingProgress(75 + Math.round((i / totalPages) * 15)); 
                 const page = pages[i];
                 const { width, height } = page.getSize();
@@ -1797,6 +1813,7 @@ async function exportCombined(queueItems, defaultFileName) {
         outDoc.setCreator("SidePDF (https://pdf.sidelabs.net/)");
         outDoc.setAuthor("SidePDF (https://pdf.sidelabs.net/)");
 
+        // Merge speed optimization: useObjectStreams: false unless compressEnabled is true
         const finalBytes = await outDoc.save({ useObjectStreams: compressEnabled });
         
         downloadBlob(new Blob([finalBytes], { type: 'application/pdf' }), defaultFileName);
@@ -1831,12 +1848,7 @@ async function exportCombined(queueItems, defaultFileName) {
                 } catch (e) {}
             });
         }
-        if (loadedDocsPdfLib) {
-            Object.keys(loadedDocsPdfLib).forEach(k => {
-                loadedDocsPdfLib[k] = null;
-                delete loadedDocsPdfLib[k];
-            });
-        }
+        // Do not purge global loadedDocsPdfLib cache here to keep subsequent merges instant
         outDoc = null;
         await hideLoading();
     }
@@ -1847,7 +1859,6 @@ async function exportSplitAll() {
     showLoading(t('splitting_document'), t('splitting_document_sub'));
     
     // Detached Safeguard: declare variables for RAM cleanup
-    const loadedDocsPdfLib = {};
     const loadedDocsPdfJs = {};
     const totalItems = queue.length;
     const canvasesToClean = [];
@@ -1860,7 +1871,9 @@ async function exportSplitAll() {
         const zip = new JSZip();
 
         for (let idx = 0; idx < totalItems; idx++) {
-            updateLoadingProgress(Math.round((idx / totalItems) * 80));
+            // UI Thread Yielding: Keep UI responsive
+            await new Promise(resolve => setTimeout(resolve, 0));
+
             const item = queue[idx];
             updateLoading(t('splitting_document'), item.originalName);
 
@@ -1873,8 +1886,8 @@ async function exportSplitAll() {
                     if (!loadedDocsPdfLib[item.fileId]) {
                         const buf = uploadedFiles[item.fileId];
                         const password = filePasswords[item.fileId] || "";
-                        // Detached Safeguard: slice(0) copies the buffer
-                        loadedDocsPdfLib[item.fileId] = await PDFDocument.load(buf.slice(0), { password });
+                        // Load buffer directly - no copies!
+                        loadedDocsPdfLib[item.fileId] = await PDFDocument.load(buf, { password });
                     }
                     const srcDoc = loadedDocsPdfLib[item.fileId];
                     const [copiedPage] = await singleDoc.copyPages(srcDoc, [item.pageIndex]);
@@ -1949,7 +1962,6 @@ async function exportSplitAll() {
                 // Apply smart image compression / grayscale colorspace replacement on split page
                 const compressEnabled = document.getElementById('toggle-compress').checked;
                 const quality = parseFloat(document.getElementById('compress-quality').value || '0.9');
-                const intelligentEnabled = document.getElementById('toggle-intelligent-compress')?.checked;
                 
                 if ((compressEnabled && quality < 1.0) || grayscaleEnabled) {
                     const resources = page.node.Resources();
@@ -1961,7 +1973,7 @@ async function exportSplitAll() {
                                 if (xObject instanceof PDFRawStream) {
                                     const subtype = xObject.dict.get(PDFName.of('Subtype'));
                                     if (subtype instanceof PDFName && subtype.decode() === 'Image') {
-                                        await recompressImageXObject(singleDoc, xObject, compressEnabled ? quality : 1.0, grayscaleEnabled, intelligentEnabled, canvasesToClean, objectUrlsToRevoke);
+                                        await recompressImageXObject(singleDoc, xObject, compressEnabled ? quality : 1.0, grayscaleEnabled, false, canvasesToClean, objectUrlsToRevoke);
                                     }
                                 }
                             }
@@ -1974,8 +1986,8 @@ async function exportSplitAll() {
                 singleDoc.setCreator("SidePDF (https://pdf.sidelabs.net/)");
                 singleDoc.setAuthor("SidePDF (https://pdf.sidelabs.net/)");
 
-                const compressEnabledToggle = document.getElementById('toggle-compress').checked;
-                const pageBytes = await singleDoc.save({ useObjectStreams: compressEnabledToggle });
+                // Merge speed optimization: useObjectStreams: false unless compressEnabled is true
+                const pageBytes = await singleDoc.save({ useObjectStreams: compressEnabled });
                 zip.file(`split_page_${paddedNum}.pdf`, pageBytes);
             } else {
                 const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
@@ -1985,7 +1997,8 @@ async function exportSplitAll() {
                     if (!loadedDocsPdfJs[item.fileId]) {
                         const buf = uploadedFiles[item.fileId];
                         const password = filePasswords[item.fileId] || "";
-                        loadedDocsPdfJs[item.fileId] = await pdfjsLib.getDocument({ data: buf.slice(0), password }).promise;
+                        // Load buffer directly - no copies!
+                        loadedDocsPdfJs[item.fileId] = await pdfjsLib.getDocument({ data: buf, password }).promise;
                     }
                     const pdfDocJs = loadedDocsPdfJs[item.fileId];
                     const page = await pdfDocJs.getPage(item.pageIndex + 1);
@@ -2004,9 +2017,9 @@ async function exportSplitAll() {
                         viewport: viewport
                     }).promise;
 
-                    // Convert to image data URL and pack
+                    // Convert to image data URL and pack asynchronously
                     const dataUrl = canvas.toDataURL(mimeType, 0.92);
-                    const imgBuffer = dataURItoArrayBuffer(dataUrl);
+                    const imgBuffer = await dataURItoArrayBuffer(dataUrl);
                     zip.file(`split_page_${paddedNum}.${fileExt}`, imgBuffer);
 
                     // GPU RAM Cleanup: Reset canvas size immediately
@@ -2046,14 +2059,11 @@ async function exportSplitAll() {
                 } catch (e) {}
             });
         }
-        if (loadedDocsPdfLib) {
-            Object.keys(loadedDocsPdfLib).forEach(k => {
-                loadedDocsPdfLib[k] = null;
-                delete loadedDocsPdfLib[k];
-            });
-        }
         if (loadedDocsPdfJs) {
             Object.keys(loadedDocsPdfJs).forEach(k => {
+                try {
+                    if (loadedDocsPdfJs[k]) loadedDocsPdfJs[k].destroy();
+                } catch(e) {}
                 loadedDocsPdfJs[k] = null;
                 delete loadedDocsPdfJs[k];
             });
@@ -2123,7 +2133,7 @@ async function loadSamplePDF() {
         });
 
         page3.drawText("Architecture Spec", { x: 50, y: 670, size: 14, font: helveticaBold, color: rgb(0.08, 0.12, 0.18) });
-        page3.drawText("Evaluation", { x: 350, y: 670, size: 14, font: helveticaBold, color: rgb(0.08, 0.12, 0.18) });
+        page3.drawText("Evaluation", { x: 350, y: 670, size: 14, font: helveticaBold, color: rgb(0.06, 0.73, 0.51) });
 
         const specs = [
             { name: "Browser Processing Latency", value: "Sub-second (< 200ms compiled)" },
@@ -2141,11 +2151,9 @@ async function loadSamplePDF() {
 
         const pdfBytes = await pdfDoc.save();
         const fileId = 'file_sample_' + Date.now();
-        const sampleBuffer = pdfBytes.buffer.slice(pdfBytes.byteOffset, pdfBytes.byteOffset + pdfBytes.byteLength);
-        uploadedFiles[fileId] = sampleBuffer;
+        uploadedFiles[fileId] = pdfBytes; // Store directly as Uint8Array
         
-        // Detached Safeguard: slice(0) copies the buffer
-        await parseAndAddPDFToQueue(sampleBuffer.slice(0), "sample_sandbox.pdf", fileId);
+        await parseAndAddPDFToQueue(pdfBytes, "sample_sandbox.pdf", fileId); // Pass buffer directly
         
         renderQueueGrid();
         updateSummary();
@@ -2178,12 +2186,6 @@ function updateCompressionEstimate() {
     
     if (!compressEnabled) {
         estimateText.textContent = currentLang === 'ko' ? "압축 비활성화됨" : "Compression Disabled";
-        return;
-    }
-
-    const intelligentEnabled = document.getElementById('toggle-intelligent-compress')?.checked;
-    if (intelligentEnabled) {
-        estimateText.textContent = currentLang === 'ko' ? "예상 크기: 제공 불가" : "Estimated Size: N/A";
         return;
     }
 

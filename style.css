@@ -614,9 +614,12 @@ body.light-mode .compress-warning-alert {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 16px;
     font-size: 0.72rem;
     color: var(--text-muted);
+    white-space: nowrap !important;
+    flex-wrap: wrap;
+    line-height: 1.5;
 }
 
 .footer-privacy-badge svg {
@@ -1505,4 +1508,36 @@ body.light-mode .loading-warning-text {
     white-space: pre-wrap;
     padding-right: 8px;
     text-align: left;
+}
+
+
+/* Google AdSense Billboard Container */
+.ad-placement-wrapper {
+    width: 100%;
+    max-width: 728px;
+    margin: 24px auto;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.ad-label {
+    font-size: 11px;
+    color: var(--text-muted, #888888);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.ad-slot-mock {
+    background-color: var(--bg-secondary, #f8f9fa);
+    border: 1px dashed var(--border-color, #e0e0e0);
+    border-radius: 6px;
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #b0b0b0;
+    font-size: 13px;
+    transition: var(--transition);
 }

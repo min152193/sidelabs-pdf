@@ -216,6 +216,37 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Section: Fit to Canvas (Letterboxing) -->
+                    <div class="setting-group">
+                        <div class="setting-group-header">
+                            <span class="aspect-ratio-icon-container"></span>
+                            <span data-i18n="lbl_letterbox_toggle">Fit to Canvas (Letterboxing)</span>
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-letterbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div id="letterbox-options" class="setting-group-body collapsed">
+                            <div class="field-group">
+                                <label for="letterbox-ratio" data-i18n="canvas_ratio">Canvas Ratio</label>
+                                <select id="letterbox-ratio" class="form-select">
+                                    <option value="a4" selected>A4 (595 x 842)</option>
+                                    <option value="letter">US Letter (612 x 792)</option>
+                                    <option value="16-9">16:9 widescreen</option>
+                                    <option value="4-3">4:3 standard</option>
+                                    <option value="1-1">1:1 square</option>
+                                </select>
+                            </div>
+                            <div class="field-group">
+                                <label for="letterbox-orientation" data-i18n="orientation">Orientation</label>
+                                <select id="letterbox-orientation" class="form-select">
+                                    <option value="portrait" selected data-i18n="orientation_portrait">Portrait</option>
+                                    <option value="landscape" data-i18n="orientation_landscape">Landscape</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- TAB 2: Split & Extract settings -->
@@ -308,6 +339,7 @@
                                 <label class="switch-label" for="toggle-grayscale">
                                     <span style="font-size:0.8rem; font-weight:600; color:var(--text-primary);" data-i18n="grayscale_title">Convert to Grayscale (B&W Filter)</span>
                                     <span style="font-size:0.68rem; color:var(--text-muted); font-weight:400; line-height:1.3;" data-i18n="grayscale_desc">Map RGB/CMYK stream definitions into single-channel luminance.</span>
+                                </label>
                                 <label class="switch" style="flex-shrink:0;">
                                     <input type="checkbox" id="toggle-grayscale">
                                     <span class="slider"></span>
@@ -367,6 +399,13 @@
 
             <!-- Workspace Body -->
             <div class="workspace-body">
+                <!-- Ad Placement Wrapper -->
+                <div class="ad-placement-wrapper">
+                    <span class="ad-label">Advertisement</span>
+                    <div class="ad-slot-mock">
+                        <span class="ad-placeholder-text">Responsive Ad Slot</span>
+                    </div>
+                </div>
                 <!-- Empty State (No Files Uploaded) -->
                 <div id="empty-state" class="empty-state">
                     <div class="empty-container">
@@ -393,6 +432,7 @@
 
                 <!-- Page Queue Grid -->
                 <div id="preview-grid" class="preview-grid hidden"></div>
+                
             </div>
             
             <input type="file" id="file-input" multiple accept="application/pdf,image/png,image/jpeg" hidden>

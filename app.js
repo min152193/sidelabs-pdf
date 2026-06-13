@@ -29,7 +29,8 @@ const ICONS = {
     alertTriangle: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>`,
     sunMoon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/><path d="M12.5 6A6 6 0 0 1 18 11.5a6 6 0 0 1-5.5 6 6 6 0 0 1 0-12z"/></svg>`,
     zap: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
-    sliders: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="2" x2="6" y1="14" y2="14"/><line x1="10" x2="14" y1="8" y2="8"/><line x1="18" x2="22" y1="16" y2="16"/></svg>`
+    sliders: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="2" x2="6" y1="14" y2="14"/><line x1="10" x2="14" y1="8" y2="8"/><line x1="18" x2="22" y1="16" y2="16"/></svg>`,
+    aspectRatio: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="12" x="3" y="6" rx="2" ry="2"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="12" x2="12" y1="6" y2="18"/></svg>`
 };
 
 function getIconSvg(name, customClass = '') {
@@ -45,7 +46,8 @@ function getIconSvg(name, customClass = '') {
 let queue = [];
 let uploadedFiles = {};
 let filePasswords = {};
-let loadedDocsPdfLib = {}; // Global PDFDocument cache to prevent reloading and detached buffer crashes
+let loadedDocsPdfLib = {}; // Global PDFDocument cache to prevent reloading and detached ArrayBuffer crashes
+let generatedObjectUrls = [];
 let activeTab = 'tab-merge';
 let splitMode = 'all';
 let currentLang = localStorage.getItem('lang') || 'en';
@@ -82,6 +84,11 @@ const translations = {
         font_size: "Font Size",
         angle: "Angle (deg)",
         page_numbering: "Page Numbering",
+        lbl_letterbox_toggle: "Fit to Canvas (Letterboxing)",
+        canvas_ratio: "Canvas Ratio",
+        orientation: "Orientation",
+        orientation_portrait: "Portrait",
+        orientation_landscape: "Landscape",
         format: "Format",
         simple_format: "Simple (\"1\", \"2\")",
         page_of_format: "Page of Total (\"Page 1 of 10\")",
@@ -185,61 +192,67 @@ const translations = {
         range_indicator_valid: "Expression targets {0} of {1} pages."
     },
     ko: {
-    logo_title: "SidePDF",
-    client_side_badge: "로컬 보안 처리",
-    total_pages: "총 페이지 수",
-    add_files: "파일 추가",
-    clear: "비우기",
-    merge_style: "병합 및 편집",
-    split_extract: "분할 및 추출",
-    watermark_overlay: "워터마크 삽입",
-    watermark_text: "문구 입력",
-    color: "글자 색상",
-    opacity: "투명도",
-    font_size: "글자 크기",
-    angle: "회전 각도",
-    page_numbering: "페이지 번호 매기기",
-    format: "표시 형식",
-    simple_format: "기본형 (1, 2, 3...)",
-    page_of_format: "전체 페이지 포함 (Page 1 of 10)",
-    position: "출력 위치",
-    bottom_center: "하단 중앙",
-    bottom_right: "하단 우측",
-    top_right: "상단 우측",
-    split_extract_config: "분할 및 추출 상세 설정",
-    split_all_pages: "모든 페이지 각각 나누기",
-    split_all_desc: "모든 페이지를 한 장씩 개별 PDF 파일로 분할한 뒤, 하나의 압축 파일로 다운로드합니다.",
-    extract_specific_pages: "원하는 페이지 지정 추출",
-    extract_desc: "선택하거나 입력한 특정 페이지들만 골라 하나의 PDF 파일로 만듭니다.",
-    define_page_range: "추출할 페이지 범위 입력",
-    define_range_ph: "입력 예시: 1-5, 8, 11-13",
-    range_status_help: "페이지 번호나 범위를 입력하면 목록에 자동으로 밝게 표시됩니다.",
-    compile_export: "최종 PDF 변환 및 다운로드",
-    privacy_text: "안심하세요. 모든 파일은 전송 없이 브라우저 내에서 100% 안전하게 처리됩니다.",
-    rotate_all: "전체 회전",
-    reverse: "순서 반전",
-    sort_by_name: "이름순 정렬",
-    drop_title: "여기에 PDF 또는 이미지를 끌어다 놓으세요",
-    drop_desc: "여러 PDF 파일이나 이미지(PNG, JPG)를 한 번에 마우스로 끌어다 놓으세요. 프로그램 설치 없이 브라우저 안에서 자유롭게 순서 변경, 회전, 편집이 가능합니다.",
-    browse_files: "내 컴퓨터에서 찾기",
-    demo_label: "기능을 먼저 테스트해보고 싶으신가요?",
-    load_sample_pdf: "샘플 PDF 파일 가져오기",
-    unlock_pdf_title: "비밀번호가 걸린 PDF 문서입니다",
-    unlock_pdf_desc: "이 파일은 보안을 위해 암호화되어 있습니다. 비밀번호를 입력해 주세요.",
-    cancel: "취소",
-    decrypt_file: "암호 해제 및 가져오기",
-    theme_label: "화면 테마",
-    theme_light: "라이트 모드",
-    theme_dark: "다크 모드",
-    theme_auto: "자동",
-    lang_label: "언어 설정",
-    compress_quality: "압축 강도 (화질 균형)",
-    lbl_compress_toggle: "PDF 용량 최적화 (용량 줄이기)",
-    compress_warning_text: "주의: 압축 화질을 75% 이하로 너무 낮추면 문서 내 작은 글씨의 가독성이 떨어질 수 있습니다.",
-    security_tooltip_text: "SidePDF는 로컬 데이터 처리 아키텍처로 구현되었습니다. 사용자의 파일은 외부 서버로 전송되지 않으며, 오직 현재 브라우저의 일시적인 샌드박스 메모리 안에서만 처리된 후 즉시 삭제되므로 유출 가능성이 원천 차단됩니다.",
-    how_does_it_work: "보안 원리가 무엇인가요?",
-    security_modal_title: "보안 및 개인정보 보호 안내",
-    security_modal_desc: "SidePDF는 로컬 데이터 처리 아키텍처로 구현되었습니다. 사용자의 파일은 외부 서버로 전송되지 않으며, 오직 현재 브라우저의 일시적인 샌드박스 메모리 안에서만 처리된 후 즉시 삭제되므로 유출 가능성이 원천 차단됩니다.",
+        logo_title: "SidePDF",
+        client_side_badge: "100% Client-Side",
+        total_pages: "총 페이지 수",
+        add_files: "파일 추가",
+        clear: "비우기",
+        merge_style: "병합 & 스타일링",
+        split_extract: "분할 & 추출",
+        watermark_overlay: "워터마크 오버레이",
+        watermark_text: "워터마크 텍스트",
+        color: "색상",
+        opacity: "불투명도",
+        font_size: "글자 크기",
+        angle: "각도 (도)",
+        page_numbering: "페이지 번호 추가",
+        format: "형식",
+        simple_format: "단순형 (\"1\", \"2\")",
+        page_of_format: "전체 페이지 포함 (\"Page 1 of 10\")",
+        position: "위치",
+        bottom_center: "하단 중앙",
+        bottom_right: "하단 우측",
+        top_right: "상단 우측",
+        split_extract_config: "분할 및 추출 설정",
+        split_all_pages: "모든 페이지 분할",
+        split_all_desc: "각 페이지를 개별 PDF로 분할하여 하나의 ZIP 파일로 다운로드합니다.",
+        extract_specific_pages: "특정 페이지 추출",
+        extract_desc: "선택한 페이지들만 하나의 결합된 PDF로 추출합니다.",
+        define_page_range: "페이지 범위 정의",
+        define_range_ph: "예: 1-5, 8, 11-13",
+        range_status_help: "페이지 번호나 범위를 입력하면 그리드에 하이라이트됩니다.",
+        compile_export: "PDF 컴파일 및 내보내기",
+        privacy_text: "서버로 데이터를 보내지 않습니다. 100% 안전함.",
+        rotate_all: "전체 회전",
+        reverse: "순서 반전",
+        sort_by_name: "이름순 정렬",
+        drop_title: "여기에 PDF 또는 이미지를 놓으세요",
+        drop_desc: "여러 PDF 파일, PNG, JPG 파일을 드래그하여 큐를 작성하세요. 브라우저에서 편리하게 정렬, 회전 및 편집할 수 있습니다.",
+        browse_files: "파일 찾기",
+        demo_label: "기능을 테스트해보고 싶으신가요?",
+        load_sample_pdf: "샘플 PDF 불러오기",
+        unlock_pdf_title: "PDF 문서 잠금 해제",
+        unlock_pdf_desc: "이 PDF 문서는 암호화되어 있어 열기 위한 비밀번호가 필요합니다.",
+        incorrect_password: "잘못된 비밀번호입니다. 다시 시도해 주세요.",
+        cancel: "취소",
+        decrypt_file: "파일 암호 해제",
+        theme_label: "테마",
+        theme_light: "라이트",
+        theme_dark: "다크",
+        theme_auto: "자동",
+        lang_label: "언어 설정",
+        compress_quality: "압축 강도 (화질 균형)",
+        lbl_compress_toggle: "PDF 압축 (용량 줄이기)",
+        lbl_letterbox_toggle: "캔버스 크기에 맞춤 (레터박스)",
+        canvas_ratio: "캔버스 비율",
+        orientation: "방향",
+        orientation_portrait: "세로",
+        orientation_landscape: "가로",
+        compress_warning_text: "주의: 압축 화질을 75% 이하로 너무 낮추면 문서 내 작은 글씨의 가독성이 떨어질 수 있습니다.",
+        security_tooltip_text: "SidePDF는 무자본 서버리스 아키텍처로 구현되었습니다. 사용자의 파일은 중앙 서버로 절대 전송되지 않으며, 오직 현재 브라우저의 일시적인 샌드박스 메모리 안에서만 연산된 후 완전히 파기되므로 유출 우려가 0%입니다.",
+        how_does_it_work: "보안 원리가 무엇인가요?",
+        security_modal_title: "보안 및 개인정보 보호 안내",
+        security_modal_desc: "SidePDF는 무자본 서버리스 아키텍처로 구현되었습니다. 사용자의 파일은 외부 서버로 일절 전송되지 않으며, 오직 현재 브라우저의 일시적인 샌드박스 메모리(RAM) 안에서만 처리된 후 즉시 휘발되므로 유출 가능성이 원천 차단됩니다.",
         close_btn: "닫기",
         privacy_policy_link: "개인정보처리방침",
         privacy_modal_title: "개인정보처리방침",
@@ -249,43 +262,62 @@ const translations = {
         terms_policy_text: `SidePDF 이용약관\n\n1. 약관의 동의\nSidePDF(이하 '서비스')를 이용함으로써 귀하는 본 이용약관에 동의하게 됩니다. 약관에 동의하지 않으실 경우 서비스를 이용하실 수 없습니다.\n\n2. 서비스의 이용\n본 서비스는 브라우저 기반의 로컬 PDF 편집 도구입니다. 개인적 또는 상업적 목적으로 자유롭게 이용하실 수 있습니다. 모든 파일 처리는 이용자의 웹 브라우저 내에서만 안전하게 실행되므로, 원본 파일의 보관 책임은 이용자에게 있습니다.\n\n3. 보증의 부인\n본 서비스는 '있는 그대로(as is)' 제공되며, 명시적이거나 묵시적인 어떠한 보증도 제공하지 않습니다. 서비스가 중단 없이 작동하거나 오류가 없을 것임을 보증하지 않습니다.\n\n4. 책임의 제한\n서비스 운영자는 이용자가 서비스를 이용함에 따라 발생한 어떠한 직접적, 간접적, 부수적 손해에 대해서도 책임을 지지 않습니다.\n\n5. 준거법\n본 약관은 서비스 운영진이 속한 관할 지역의 법률에 따라 해석되고 규율됩니다.\n\n문의: contact@sidelabs.net`,
         about_link: "소개",
         about_modal_title: "소개",
-        about_policy_text: `SidePDF 소개\n\nSidePDF는 SideLabs가 개발한 로컬 PDF 유틸리티 플랫폼입니다.\n\n저희의 목표는 사용자의 민감한 자료가 외부 서버로 절대 유출되지 않도록, 브라우저 샌드박스 내부에서 모든 최적화, 병합, 분할 연산을 완벽하게 처리하는 보안 환경을 구축하는 것입니다. WebAssembly 기술을 적용하여 파일 업로드 대기 시간을 극도로 줄이고 완벽한 개인정보 보호를 보장합니다.\n\nSideLabs의 SidePDF 도구는 모두가 쉽고 안전하게 PDF를 다룰 수 있도록 도와주는 서비스를 제공합니다.\n\n문의: contact@sidelabs.net\n메인 홈페이지: https://sidelabs.net`,
-    
-    // 고급 필터 패널 (학술/엔지니어링 명사를 깔끔한 일반 SaaS 용어로 정제)
-    filters_panel_title: "문서 용량 최적화 및 필터 고급 설정",
-    strip_ocr_title: "불필요한 OCR 텍스트 레이어 제거",
-    strip_ocr_desc: "스캔 문서 뒤에 숨겨진 텍스트 메타데이터 영역을 삭제하여 용량을 확보하고 렉을 줄입니다.",
-    flatten_vector_title: "태블릿 필기 데이터 병합 (렉 줄이기)",
-    flatten_vector_desc: "굿노트, 노타빌리티 등에서 조각난 펜 필기 경로를 하나로 합쳐 파일 열람 시 버벅임과 렉을 줄입니다.",
-    grayscale_title: "흑백 변환",
-    grayscale_desc: "색상 요소를 흑백으로 변환하여 잉크 소모와 용량을 극한으로 줄입니다.",
-    
-    split_format_label: "저장할 확장자 형식",
-    format_pdf: "PDF 문서 파일 (.pdf)",
-    format_jpg: "JPEG 이미지 이미지 (.jpg)",
-    format_png: "PNG 고화질 이미지 (.png)",
+        about_policy_text: `SidePDF 소개\n\nSidePDF는 SideLabs가 개발한 서버리스 기반의 100% 로컬 클라이언트 사이드 PDF 유틸리티 플랫폼입니다.\n\n저희의 미션은 사용자의 민감한 문서 데이터가 외부 서버로 절대 유출되지 않도록, 브라우저 샌드박스 내부(RAM 및 CPU)에서 모든 최적화, 병합, 분할 연산을 완벽하게 처리하는 보안 환경을 구축하는 것입니다. WebAssembly 기술을 적용하여 파일 업로드 대기 시간을 제로로 줄이고 완벽한 개인정보 보호를 보장합니다.\n\nSideLabs는 사용자의 프라이버시를 존중하고 클라이언트 사이드 컴퓨팅 파워를 극적화하는 제로트러스트 보안 웹 도구를 전문적으로 설계합니다.\n\n문의: contact@sidelabs.net`,
+        filters_panel_title: "PDF 최적화 및 프로세싱 필터",
+        strip_ocr_title: "OCR 텍스트 스트림 제거",
+        strip_ocr_desc: "보이지 않는 OCR 텍스트 레이어를 제거하여 용량을 줄입니다.",
+        flatten_vector_title: "벡터 잉크 획 병합 (플래튼)",
+        flatten_vector_desc: "조각난 펜 필기 벡터 경로를 하나로 병합하여 랙을 줄입니다.",
+        grayscale_title: "그레이스케일 변환 (흑백 필터)",
+        grayscale_desc: "RGB/CMYK 색상 정의를 1채널 조도 벡터로 매핑합니다.",
+        split_format_label: "내보내기 형식",
+        format_pdf: "PDF 문서 (.pdf)",
+        format_jpg: "JPEG 이미지 (.jpg)",
+        format_png: "PNG 이미지 (.png)",
+        
+        toast_no_valid: "유효한 파일이 감지되지 않았습니다. PDF, JPEG, PNG 파일만 지원합니다.",
+        toast_skipped_dup: "일부 중복 파일이 대기열에서 제외되었습니다.",
+        toast_load_fail: "파일을 완전히 로드하지 못했습니다.",
+        toast_parse_fail: "\"{0}\" 분석 실패: {1}",
+        toast_download_success: "제한이 해제된 PDF 다운로드가 완료되었습니다!",
+        toast_merge_success: "스타일이 적용된 PDF 다운로드가 완료되었습니다!",
+        toast_extract_success: "선택한 페이지 추출 및 다운로드가 완료되었습니다!",
+        toast_zip_success: "분할된 페이지 ZIP 파일 생성이 완료되었습니다!",
+        toast_queue_cleared: "작업 공간이 비워졌습니다.",
+        toast_reversed: "페이지 순서가 반전되었습니다.",
+        toast_sorted: "대기열이 파일 이름순으로 정렬되었습니다.",
+        toast_rotated_all: "그리드의 모든 페이지가 회전되었습니다.",
+        toast_empty_queue: "작업 공간이 비어 있습니다. 먼저 파일을 로드하세요.",
+        toast_invalid_range: "추출할 유효한 페이지 범위를 정의하세요.",
+        toast_demo_loaded: "샘플 PDF가 생성되고 로드되었습니다!",
+        toast_invalid_ranges_err: "Invalid page ranges: {0}",
+        toast_no_valid_pages_err: "No valid pages selected for extraction.",
+        toast_split_fail: "분할 실패: {0}",
+        toast_compile_fail: "컴파일 실패: {0}",
+        toast_pw_aborted: "비밀번호 입력이 취소되었습니다.",
+        toast_unlock_success: "파일 암호가 성공적으로 해제되었습니다.",
+        toast_clear_confirm: "대기 중인 활성 작업 공간을 비으시겠습니까?",
 
-    // 실시간 로딩 텍스트 (사용자가 진행 상황을 직관적으로 보게 동사형 명사로 정제)
-        loading_files: "파일을 읽어와 분석하는 중...",
-        loading_warning: "대용량 문서를 처리할 때는 브라우저 탭을 전환하거나 창을 최소화하면 처리가 일시 중단될 수 있습니다. 변환이 끝날 때까지 창을 유지해 주세요.",
-        purging_workspace: "작업 공간을 깨끗하게 비우는 중...",
-        rotating_pipeline: "선택한 페이지들을 회전시키는 중...",
-        reversing_layout: "문서의 페이지 정렬 순서를 뒤집는 중...",
-        sorting_pipeline: "파일 이름을 기준으로 순서를 정렬하는 중...",
-        compiling_pdf: "새로운 PDF 문서 구성 중...",
-        unlocking_assembling: "페이지 데이터 인덱싱 및 재배치 중 ({0}/{1})...",
-        stamping_watermark: "페이지 위에 워터마크 레이어 합성 중...",
-        stamping_watermark_sub: "반투명 텍스트 오버레이 적용 중...",
-        numbering_pages: "바닥글 페이지 번호 생성 중...",
-        numbering_pages_sub: "문서 하단 하단 영역에 고유 일련번호 마킹 중...",
-        saving_final: "최종 최적화 문서 빌드 중...",
-        saving_final_sub: "출력용 PDF 바이너리 바이너리 스트림 파일 생성 중...",
-        splitting_document: "지정한 단일 페이지 쪼개는 중...",
-        splitting_document_sub: "개별 문서로 묶는 중...",
-        packaging_zip: "분할된 파일 압축 패키지 구성 중...",
-        packaging_zip_sub: "ZIP 압축 스트림 변환 엔진 가동 중...",
-        generating_sample: "테스트용 데모 생성 중...",
-        generating_sample_sub: "브라우저 환경에서 샘플 문서 합성 중...",
+        loading_files: "파일을 불러오고 처리하는 중...",
+        loading_warning: "대용량 파일 처리 시 브라우저 탭을 전환하거나 최소화하면 처리가 일시 중단될 수 있으므로 화면을 그대로 유지해 주세요.",
+        purging_workspace: "작업 공간 초기화 중...",
+        rotating_pipeline: "페이지들을 회전하는 중...",
+        reversing_layout: "문서 레이아웃 순서 반전 중...",
+        sorting_pipeline: "이름순으로 정렬하는 중...",
+        compiling_pdf: "PDF 컴파일 중...",
+        unlocking_assembling: "페이지 잠금 해제 및 어셈블리 중 ({0}/{1})...",
+        stamping_watermark: "워터마크 스탬핑 중...",
+        stamping_watermark_sub: "사용자 정의 대각선 워터마크 텍스트 오버레이 중...",
+        numbering_pages: "페이지 번호 매기는 중...",
+        numbering_pages_sub: "문서 바닥글 마커 도장 찍는 중...",
+        saving_final: "최종 문서 저장 중...",
+        saving_final_sub: "PDF 바이너리 레이아웃 스트림 생성 중...",
+        splitting_document: "문서 분할 중...",
+        splitting_document_sub: "개별 단일 페이지 문서 패키징 중...",
+        packaging_zip: "ZIP 아카이브 압축 중...",
+        packaging_zip_sub: "Generating ZIP file stream...",
+        generating_sample: "샘플 PDF 생성 중...",
+        generating_sample_sub: "로컬 환경에서 데모 문서 합성 중...",
         loading_title_processing: "Processing PDF...",
         loading_text_rendering: "Extracting and rendering pages to visual queue.",
         
@@ -368,26 +400,6 @@ function applyTheme(theme) {
     }
 }
 
-function updateDocumentMetadata(lang) {
-    const metaConfig = {
-        ko: {
-            title: "SidePDF - 안전한 로컬 PDF 편집기",
-            desc: "파일 업로드 없는 PDF 최적화. 압축, 분할, 병합, 편집 잠금 해제를 개인정보 걱정 없이 해결하세요."
-        },
-        en: {
-            title: "SidePDF - Private Secure PDF Suite",
-            desc: "Optimize, split, and merge documents directly in your browser. Zero server uploads, absolute data privacy, and instant local processing."
-        }
-    };
-    const config = metaConfig[lang] || metaConfig['en'];
-    
-    document.title = config.title;
-    
-    document.querySelector('meta[name="description"]')?.setAttribute('content', config.desc);
-    document.querySelector('meta[property="og:title"]')?.setAttribute('content', config.title);
-    document.querySelector('meta[property="og:description"]')?.setAttribute('content', config.desc);
-}
-
 // Language Engine Setup
 function initLanguage() {
     const langSelect = document.getElementById('lang-select');
@@ -416,6 +428,26 @@ function initLanguage() {
     });
 }
 
+function updateDocumentMetadata(lang) {
+    const metaConfig = {
+        ko: {
+            title: "SidePDF - 서버 전송 없는 안전한 로컬 PDF 편집기",
+            desc: "파일 업로드 없이 브라우저에서 100% 로컬로 처리되는 PDF 최적화 솔루션. 압축, 분할, 병합을 개인정보 유출 걱정 없이 안전하게 해결하세요."
+        },
+        en: {
+            title: "SidePDF - 100% Client-Side Secure PDF Suite",
+            desc: "Optimize, split, and merge documents directly in your browser. Zero server uploads, absolute data privacy, and instant local processing."
+        }
+    };
+    const config = metaConfig[lang] || metaConfig['en'];
+    
+    document.title = config.title;
+    
+    document.querySelector('meta[name="description"]')?.setAttribute('content', config.desc);
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content', config.title);
+    document.querySelector('meta[property="og:description"]')?.setAttribute('content', config.desc);
+}
+
 // DOM SVG Injector
 function renderInterfaceIcons() {
     document.querySelectorAll('.logo-icon-container').forEach(el => el.innerHTML = getIconSvg('layers'));
@@ -439,6 +471,7 @@ function renderInterfaceIcons() {
     document.querySelectorAll('#browse-btn .btn-icon-container').forEach(el => el.innerHTML = getIconSvg('search'));
     document.querySelectorAll('#load-demo-btn .btn-icon-container').forEach(el => el.innerHTML = getIconSvg('sparkles'));
     document.querySelectorAll('.filters-icon-container').forEach(el => el.innerHTML = getIconSvg('sliders'));
+    document.querySelectorAll('.aspect-ratio-icon-container').forEach(el => el.innerHTML = getIconSvg('aspectRatio'));
 }
 
 // Loading Modal Control
@@ -712,7 +745,8 @@ function setupSettingToggles() {
         { checkboxId: 'toggle-filters', bodyId: 'filters-options' },
         { checkboxId: 'toggle-strip-ocr', bodyId: null },
         { checkboxId: 'toggle-flatten-vector', bodyId: null },
-        { checkboxId: 'toggle-grayscale', bodyId: null }
+        { checkboxId: 'toggle-grayscale', bodyId: null },
+        { checkboxId: 'toggle-letterbox', bodyId: 'letterbox-options' }
     ];
 
     configs.forEach(cfg => {
@@ -971,7 +1005,7 @@ async function parseAndAddPDFToQueue(arrayBuffer, fileName, fileId) {
 
     // 2. Automated Edit Restriction Removal Logic
     try {
-        const tempDoc = await PDFDocument.load(arrayBuffer);
+        const tempDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
         const permissionFreeBytes = await tempDoc.save();
         arrayBuffer = permissionFreeBytes;
         uploadedFiles[fileId] = arrayBuffer; // update stored buffer with the permission-free copy
@@ -989,9 +1023,9 @@ async function parseAndAddPDFToQueue(arrayBuffer, fileName, fileId) {
         try {
             updateLoading(t('loading_files') + ` (${fileName})`, "Parsing document...");
             // Load buffer directly - no copies!
-            pdfLibDoc = await PDFDocument.load(arrayBuffer, { password: userPassword || undefined });
+            pdfLibDoc = await PDFDocument.load(arrayBuffer, { password: userPassword || undefined, ignoreEncryption: true });
             // If PDF-Lib succeeds, load via PDFJS
-            pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer, password: userPassword || undefined }).promise;
+            pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0), password: userPassword || undefined }).promise;
             success = true;
         } catch (error) {
             const isPasswordErr = error.name === 'PasswordException' || error.code === 1 || error.message.includes('password') || error.message.includes('decrypt');
@@ -1131,21 +1165,23 @@ function stripOcrTextFromPage(page) {
             for (let i = 0; i < contents.size(); i++) {
                 const stream = page.node.context.lookup(contents.get(i));
                 if (stream instanceof PDFRawStream) {
-                    const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
+                    const targetStream = stream.stream || stream;
+                    const uncompressed = PDFLib.decodePDFRawStream(targetStream).getBytes();
                     const cleaned = stripOcrTextFromContentStream(uncompressed);
-                    stream.contents = cleaned;
-                    stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
-                    stream.dict.delete(PDFName.of('Filter'));
+                    targetStream.contents = cleaned;
+                    targetStream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
+                    targetStream.dict.delete(PDFName.of('Filter'));
                 }
             }
         } else {
             const stream = page.node.context.lookup(contents);
             if (stream instanceof PDFRawStream) {
-                const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
+                const targetStream = stream.stream || stream;
+                const uncompressed = PDFLib.decodePDFRawStream(targetStream).getBytes();
                 const cleaned = stripOcrTextFromContentStream(uncompressed);
-                stream.contents = cleaned;
-                stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
-                stream.dict.delete(PDFName.of('Filter'));
+                targetStream.contents = cleaned;
+                targetStream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
+                targetStream.dict.delete(PDFName.of('Filter'));
             }
         }
     } catch (e) {
@@ -1180,21 +1216,23 @@ function convertPageToGrayscale(page) {
             for (let i = 0; i < contents.size(); i++) {
                 const stream = page.node.context.lookup(contents.get(i));
                 if (stream instanceof PDFRawStream) {
-                    const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
+                    const targetStream = stream.stream || stream;
+                    const uncompressed = PDFLib.decodePDFRawStream(targetStream).getBytes();
                     const cleaned = convertContentStreamToGrayscale(uncompressed);
-                    stream.contents = cleaned;
-                    stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
-                    stream.dict.delete(PDFName.of('Filter'));
+                    targetStream.contents = cleaned;
+                    targetStream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
+                    targetStream.dict.delete(PDFName.of('Filter'));
                 }
             }
         } else {
             const stream = page.node.context.lookup(contents);
             if (stream instanceof PDFRawStream) {
-                const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
+                const targetStream = stream.stream || stream;
+                const uncompressed = PDFLib.decodePDFRawStream(targetStream).getBytes();
                 const cleaned = convertContentStreamToGrayscale(uncompressed);
-                stream.contents = cleaned;
-                stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
-                stream.dict.delete(PDFName.of('Filter'));
+                targetStream.contents = cleaned;
+                targetStream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
+                targetStream.dict.delete(PDFName.of('Filter'));
             }
         }
     } catch (e) {
@@ -1223,7 +1261,8 @@ function flattenVectorInkOnPage(page) {
             for (let i = 0; i < contents.size(); i++) {
                 const stream = page.node.context.lookup(contents.get(i));
                 if (stream instanceof PDFRawStream) {
-                    const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
+                    const targetStream = stream.stream || stream;
+                    const uncompressed = PDFLib.decodePDFRawStream(targetStream).getBytes();
                     const cleaned = flattenVectorInkContentStream(uncompressed);
                     stream.contents = cleaned;
                     stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
@@ -1233,7 +1272,8 @@ function flattenVectorInkOnPage(page) {
         } else {
             const stream = page.node.context.lookup(contents);
             if (stream instanceof PDFRawStream) {
-                const uncompressed = PDFLib.decodePDFRawStream(stream).getBytes();
+                const targetStream = stream.stream || stream;
+                const uncompressed = PDFLib.decodePDFRawStream(targetStream).getBytes();
                 const cleaned = flattenVectorInkContentStream(uncompressed);
                 stream.contents = cleaned;
                 stream.dict.set(PDFName.of('Length'), PDFNumber.of(cleaned.length));
@@ -1244,86 +1284,147 @@ function flattenVectorInkOnPage(page) {
         console.warn("Failed to flatten vector ink paths:", e);
     }
 }
-
-// Re-compress embedded PDF Image XObject
-async function recompressImageXObject(pdfDoc, xObject, quality, grayscaleEnabled, blurEnabled, canvasesToClean, objectUrlsToRevoke) {
+async function recompressImageXObject(pdfDoc, xObject, quality) {
     try {
+        const width = xObject.dict.get(PDFName.of('Width'))?.numberValue || xObject.dict.get(PDFName.of('Width'))?.value;
+        const height = xObject.dict.get(PDFName.of('Height'))?.numberValue || xObject.dict.get(PDFName.of('Height'))?.value;
+        if (!width || !height) return;
+
         const filterObj = xObject.dict.get(PDFName.of('Filter'));
         let isDCT = false;
-        if (filterObj instanceof PDFName) {
-            isDCT = filterObj.decode() === 'DCTDecode';
+        if (filterObj === PDFName.of('DCTDecode')) {
+            isDCT = true;
         } else if (filterObj instanceof PDFArray) {
-            isDCT = filterObj.asArray().some(f => f instanceof PDFName && f.decode() === 'DCTDecode');
+            isDCT = filterObj.asArray().some(f => f === PDFName.of('DCTDecode'));
         }
-        
-        if (!isDCT) return; 
 
-        const bytes = xObject.contents; 
-        
-        const compressedBytes = await new Promise((resolve, reject) => {
-            const blob = new Blob([bytes], { type: 'image/jpeg' });
-            const url = URL.createObjectURL(blob);
-            if (objectUrlsToRevoke) objectUrlsToRevoke.push(url);
-            
-            const img = new Image();
-            img.onload = () => {
-                URL.revokeObjectURL(url);
-                
-                let width = img.width;
-                let height = img.height;
-                const maxDim = quality >= 0.85 ? 2400 : 1200; // Smart Resolution Threshold
-                if (width > maxDim || height > maxDim) {
-                    if (width > height) {
-                        height = Math.round((height * maxDim) / width);
-                        width = maxDim;
+        const targetStream = xObject.stream || xObject;
+        const uncompressedBytes = PDFLib.decodePDFRawStream(targetStream).getBytes();
+
+        let compressedBytes;
+        if (isDCT) {
+            compressedBytes = await new Promise((resolve, reject) => {
+                const blob = new Blob([uncompressedBytes], { type: 'image/jpeg' });
+                const url = URL.createObjectURL(blob);
+                const img = new Image();
+                img.onload = () => {
+                    URL.revokeObjectURL(url);
+                    let w = img.width;
+                    let h = img.height;
+                    if (w > 1500 || h > 1500) {
+                        if (w > h) {
+                            h = Math.round((h * 1500) / w);
+                            w = 1500;
+                        } else {
+                            w = Math.round((w * 1500) / h);
+                            h = 1500;
+                        }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    canvas.toBlob((cblob) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            resolve(new Uint8Array(reader.result));
+                            canvas.width = 0;
+                            canvas.height = 0;
+                        };
+                        reader.readAsArrayBuffer(cblob);
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error("Image decode fail"));
+                };
+                img.src = url;
+            });
+        } else {
+            const colorSpace = xObject.dict.get(PDFName.of('ColorSpace'));
+            const isRGB = colorSpace === PDFName.of('DeviceRGB');
+            const isGray = colorSpace === PDFName.of('DeviceGray');
+
+            compressedBytes = await new Promise((resolve) => {
+                let w = width;
+                let h = height;
+                if (w > 1500 || h > 1500) {
+                    if (w > h) {
+                        h = Math.round((h * 1500) / w);
+                        w = 1500;
                     } else {
-                        width = Math.round((width * maxDim) / height);
-                        height = maxDim;
+                        w = Math.round((w * 1500) / h);
+                        h = 1500;
                     }
                 }
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                const tempCtx = tempCanvas.getContext('2d');
+                const imgData = tempCtx.createImageData(width, height);
+
+                if (isRGB && uncompressedBytes.length >= width * height * 3) {
+                    for (let i = 0; i < width * height; i++) {
+                        imgData.data[i * 4] = uncompressedBytes[i * 3];
+                        imgData.data[i * 4 + 1] = uncompressedBytes[i * 3 + 1];
+                        imgData.data[i * 4 + 2] = uncompressedBytes[i * 3 + 2];
+                        imgData.data[i * 4 + 3] = 255;
+                    }
+                } else if (isGray && uncompressedBytes.length >= width * height) {
+                    for (let i = 0; i < width * height; i++) {
+                        const g = uncompressedBytes[i];
+                        imgData.data[i * 4] = g;
+                        imgData.data[i * 4 + 1] = g;
+                        imgData.data[i * 4 + 2] = g;
+                        imgData.data[i * 4 + 3] = 255;
+                    }
+                } else {
+                    for (let i = 0; i < width * height; i++) {
+                        imgData.data[i * 4] = 128;
+                        imgData.data[i * 4 + 1] = 128;
+                        imgData.data[i * 4 + 2] = 128;
+                        imgData.data[i * 4 + 3] = 255;
+                    }
+                }
+                tempCtx.putImageData(imgData, 0, 0);
 
                 const canvas = document.createElement('canvas');
-                if (canvasesToClean) canvasesToClean.push(canvas);
-                canvas.width = width;
-                canvas.height = height;
+                canvas.width = w;
+                canvas.height = h;
                 const ctx = canvas.getContext('2d');
-                
-                if (grayscaleEnabled) {
-                    ctx.filter = 'grayscale(100%)';
-                }
-                if (blurEnabled) {
-                    const blurRadius = Math.max(0, (1.0 - quality) * 10);
-                    if (blurRadius > 0) {
-                        ctx.filter = grayscaleEnabled 
-                            ? `grayscale(100%) blur(${blurRadius}px)` 
-                            : `blur(${blurRadius}px)`;
-                    }
-                }
-                
-                ctx.drawImage(img, 0, 0, width, height);
-                canvas.toBlob((compressedBlob) => {
+                ctx.drawImage(tempCanvas, 0, 0, w, h);
+                canvas.toBlob((cblob) => {
                     const reader = new FileReader();
-                    reader.onloadend = () => resolve(new Uint8Array(reader.result));
-                    reader.readAsArrayBuffer(compressedBlob);
-                    canvas.width = 0;
-                    canvas.height = 0; 
+                    reader.onloadend = () => {
+                        resolve(new Uint8Array(reader.result));
+                        canvas.width = 0;
+                        canvas.height = 0;
+                        tempCanvas.width = 0;
+                        tempCanvas.height = 0;
+                    };
+                    reader.readAsArrayBuffer(cblob);
                 }, 'image/jpeg', quality);
-            };
-            img.onerror = () => {
-                URL.revokeObjectURL(url);
-                reject(new Error("Image decode failed"));
-            };
-            img.src = url;
-        });
+            });
+        }
 
-        xObject.contents = compressedBytes;
-        xObject.dict.set(PDFName.of('Filter'), PDFName.of('DCTDecode'));
-        xObject.dict.set(PDFName.of('Length'), PDFNumber.of(compressedBytes.length));
-        xObject.dict.delete(PDFName.of('DecodeParms'));
-    } catch (err) {
-        console.warn("Failed to re-compress image XObject:", err);
+        targetStream.contents = compressedBytes;
+        targetStream.dict.set(PDFName.of('Length'), PDFNumber.of(compressedBytes.length));
+        targetStream.dict.set(PDFName.of('Filter'), PDFName.of('DCTDecode'));
+        targetStream.dict.delete(PDFName.of('DecodeParms'));
+        
+        if (xObject.stream) {
+            xObject.stream.contents = compressedBytes;
+            xObject.stream.dict.set(PDFName.of('Length'), PDFNumber.of(compressedBytes.length));
+            xObject.stream.dict.set(PDFName.of('Filter'), PDFName.of('DCTDecode'));
+            xObject.stream.dict.delete(PDFName.of('DecodeParms'));
+        }
+    } catch (e) {
+        console.warn("Failed to downsample image:", e);
     }
 }
+
+
 
 // Queue list rendering, single rotations & deletions
 function renderQueueGrid() {
@@ -1498,10 +1599,34 @@ async function clearQueue() {
     if (confirm(t('toast_clear_confirm'))) {
         showLoadingScreen(t('purging_workspace'));
         try {
+            // Iterate through all generated Blob URLs and execute URL.revokeObjectURL()
+            generatedObjectUrls.forEach(url => {
+                try {
+                    URL.revokeObjectURL(url);
+                } catch (e) {}
+            });
+            generatedObjectUrls = [];
+
+            // Explicitly revoke any image URL in the queue
+            queue.forEach(item => {
+                if (item.thumbnailUrl && item.thumbnailUrl.startsWith('blob:')) {
+                    try {
+                        URL.revokeObjectURL(item.thumbnailUrl);
+                    } catch (e) {}
+                }
+            });
+
+            // Nullify any cached ArrayBuffer instances
+            Object.keys(uploadedFiles).forEach(key => {
+                uploadedFiles[key] = null;
+            });
+
+            // Explicitly reassign core memory maps to empty states
             queue = [];
             uploadedFiles = {};
             filePasswords = {};
             loadedDocsPdfLib = {}; // Clear global cache references
+            
             const rangeInput = document.getElementById('extract-range');
             if (rangeInput) rangeInput.value = '';
             renderQueueGrid();
@@ -1512,6 +1637,7 @@ async function clearQueue() {
         }
     }
 }
+
 
 function handleRangeInput() {
     const rangeInput = document.getElementById('extract-range');
@@ -1583,6 +1709,24 @@ function getMatchedIndices() {
     return matched;
 }
 
+// Global dynamic filename prefix helper
+function getExportFilename(defaultExt) {
+    if (queue.length === 0) {
+        return `sidepdf-export.${defaultExt}`;
+    }
+    const topItem = queue[0];
+    const origName = topItem.originalName || 'document';
+    
+    // Strip native file extension suffix
+    const lastDotIdx = origName.lastIndexOf('.');
+    const baseName = lastDotIdx !== -1 ? origName.substring(0, lastDotIdx) : origName;
+    
+    // Clean baseName from dangerous symbols
+    const sanitizedBase = baseName.replace(/[\/\\?%*:|"<>\s]/g, '_');
+    
+    return `sidepdf-${sanitizedBase}.${defaultExt}`;
+}
+
 // Export pipeline trigger
 async function processPDFExport() {
     if (queue.length === 0) {
@@ -1623,10 +1767,12 @@ async function processPDFExport() {
                     return;
                 }
                 const selectedItems = Array.from(matched).map(idx => queue[idx]);
-                await exportCombined(selectedItems, 'extracted.pdf');
+                const exportName = getExportFilename('pdf');
+                await exportCombined(selectedItems, exportName);
             }
         } else {
-            await exportCombined(queue, 'merged.pdf');
+            const exportName = getExportFilename('pdf');
+            await exportCombined(queue, exportName);
         }
     } finally {
         console.timeEnd('PDF Processing');
@@ -1641,6 +1787,47 @@ async function exportCombined(queueItems, defaultFileName) {
     const totalItems = queueItems.length;
     const canvasesToClean = [];
     const objectUrlsToRevoke = [];
+    const letterboxEnabled = document.getElementById('toggle-letterbox')?.checked;
+    const compressEnabled = document.getElementById('toggle-compress')?.checked;
+    const quality = parseFloat(document.getElementById('compress-quality')?.value || '0.9');
+
+    let targetWidth = 595.28;
+    let targetHeight = 841.89;
+
+    if (letterboxEnabled) {
+        const ratioSelect = document.getElementById('letterbox-ratio');
+        const orientationSelect = document.getElementById('letterbox-orientation');
+        const ratio = ratioSelect ? ratioSelect.value : 'a4';
+        const orientation = orientationSelect ? orientationSelect.value : 'portrait';
+
+        let baseWidth = 595.28;
+        let baseHeight = 841.89;
+
+        if (ratio === 'a4') {
+            baseWidth = 595.28;
+            baseHeight = 841.89;
+        } else if (ratio === 'letter') {
+            baseWidth = 612.00;
+            baseHeight = 792.00;
+        } else if (ratio === '16-9') {
+            baseWidth = 473.56;
+            baseHeight = 841.89;
+        } else if (ratio === '4-3') {
+            baseWidth = 631.42;
+            baseHeight = 841.89;
+        } else if (ratio === '1-1') {
+            baseWidth = 841.89;
+            baseHeight = 841.89;
+        }
+
+        if (orientation === 'landscape') {
+            targetWidth = baseHeight;
+            targetHeight = baseWidth;
+        } else {
+            targetWidth = baseWidth;
+            targetHeight = baseHeight;
+        }
+    }
 
     try {
         outDoc = await PDFDocument.create();
@@ -1658,19 +1845,62 @@ async function exportCombined(queueItems, defaultFileName) {
                     const arrayBuffer = uploadedFiles[item.fileId];
                     const password = filePasswords[item.fileId] || "";
                     // Load buffer directly - no copies!
-                    loadedDocsPdfLib[item.fileId] = await PDFDocument.load(arrayBuffer, { password });
+                    loadedDocsPdfLib[item.fileId] = await PDFDocument.load(arrayBuffer, { password, ignoreEncryption: true });
                 }
                 const srcDoc = loadedDocsPdfLib[item.fileId];
-                const [copiedPage] = await outDoc.copyPages(srcDoc, [item.pageIndex]);
-
-                const originalRotation = copiedPage.getRotation().angle;
-                copiedPage.setRotation(degrees((originalRotation + item.rotation) % 360));
                 
-                outDoc.addPage(copiedPage);
+                if (letterboxEnabled) {
+                    const page = outDoc.addPage([targetWidth, targetHeight]);
+                    const embeddedPage = await outDoc.embedPage(srcDoc.getPage(item.pageIndex));
+                    
+                    const srcPage = srcDoc.getPage(item.pageIndex);
+                    const originalRotation = srcPage.getRotation().angle;
+                    const totalRotation = (originalRotation + item.rotation) % 360;
+                    const srcW = srcPage.getWidth();
+                    const srcH = srcPage.getHeight();
+                    const isRotated = totalRotation === 90 || totalRotation === 270;
+                    const displayW = isRotated ? srcH : srcW;
+                    const displayH = isRotated ? srcW : srcH;
+                    
+                    const scale = Math.min(targetWidth / displayW, targetHeight / displayH);
+                    const drawW = srcW * scale;
+                    const drawH = srcH * scale;
+                    
+                    const targetX = (targetWidth - displayW * scale) / 2;
+                    const targetY = (targetHeight - displayH * scale) / 2;
+                    
+                    let drawX = 0;
+                    let drawY = 0;
+                    
+                    if (totalRotation === 0) {
+                        drawX = targetX;
+                        drawY = targetY;
+                    } else if (totalRotation === 90) {
+                        drawX = targetX + displayW * scale;
+                        drawY = targetY;
+                    } else if (totalRotation === 180) {
+                        drawX = targetX + displayW * scale;
+                        drawY = targetY + displayH * scale;
+                    } else if (totalRotation === 270) {
+                        drawX = targetX;
+                        drawY = targetY + displayH * scale;
+                    }
+                    
+                    page.drawPage(embeddedPage, {
+                        x: drawX,
+                        y: drawY,
+                        width: drawW,
+                        height: drawH,
+                        rotate: degrees(totalRotation)
+                    });
+                } else {
+                    const [copiedPage] = await outDoc.copyPages(srcDoc, [item.pageIndex]);
+                    const originalRotation = copiedPage.getRotation().angle;
+                    copiedPage.setRotation(degrees((originalRotation + item.rotation) % 360));
+                    outDoc.addPage(copiedPage);
+                }
             } else if (item.type === 'image') {
                 let arrayBuffer = uploadedFiles[item.fileId];
-                const compressEnabled = document.getElementById('toggle-compress').checked;
-                const quality = parseFloat(document.getElementById('compress-quality').value || '0.9');
                 
                 if (compressEnabled && quality < 1.0) {
                     arrayBuffer = await compressImageBuffer(arrayBuffer, item.mimeType, 1200, quality);
@@ -1683,31 +1913,73 @@ async function exportCombined(queueItems, defaultFileName) {
                     embedImg = await outDoc.embedJpg(arrayBuffer);
                 }
 
-                // Fit to standard A4 (Letterbox)
-                const A4_WIDTH = 595.28;
-                const A4_HEIGHT = 841.89;
-                const page = outDoc.addPage([A4_WIDTH, A4_HEIGHT]);
-
-                const imgRatio = embedImg.width / embedImg.height;
-                const pageRatio = A4_WIDTH / A4_HEIGHT;
-                let width, height, x, y;
-
-                if (imgRatio > pageRatio) {
-                    width = A4_WIDTH;
-                    height = A4_WIDTH / imgRatio;
-                    x = 0;
-                    y = (A4_HEIGHT - height) / 2;
+                if (letterboxEnabled) {
+                    const page = outDoc.addPage([targetWidth, targetHeight]);
+                    
+                    const isRotated = item.rotation === 90 || item.rotation === 270;
+                    const displayW = isRotated ? embedImg.height : embedImg.width;
+                    const displayH = isRotated ? embedImg.width : embedImg.height;
+                    
+                    const scale = Math.min(targetWidth / displayW, targetHeight / displayH);
+                    const drawW = embedImg.width * scale;
+                    const drawH = embedImg.height * scale;
+                    
+                    const targetX = (targetWidth - displayW * scale) / 2;
+                    const targetY = (targetHeight - displayH * scale) / 2;
+                    
+                    let drawX = 0;
+                    let drawY = 0;
+                    
+                    if (item.rotation === 0) {
+                        drawX = targetX;
+                        drawY = targetY;
+                    } else if (item.rotation === 90) {
+                        drawX = targetX + displayW * scale;
+                        drawY = targetY;
+                    } else if (item.rotation === 180) {
+                        drawX = targetX + displayW * scale;
+                        drawY = targetY + displayH * scale;
+                    } else if (item.rotation === 270) {
+                        drawX = targetX;
+                        drawY = targetY + displayH * scale;
+                    }
+                    
+                    page.drawImage(embedImg, {
+                        x: drawX,
+                        y: drawY,
+                        width: drawW,
+                        height: drawH,
+                        rotate: degrees(item.rotation)
+                    });
                 } else {
-                    height = A4_HEIGHT;
-                    width = A4_HEIGHT * imgRatio;
-                    x = (A4_WIDTH - width) / 2;
-                    y = 0;
-                }
-
-                page.drawImage(embedImg, { x, y, width, height });
-                
-                if (item.rotation !== 0) {
-                    page.setRotation(degrees(item.rotation));
+                    const displayW = item.rotation === 90 || item.rotation === 270 ? embedImg.height : embedImg.width;
+                    const displayH = item.rotation === 90 || item.rotation === 270 ? embedImg.width : embedImg.height;
+                    const page = outDoc.addPage([displayW, displayH]);
+                    
+                    let drawX = 0;
+                    let drawY = 0;
+                    
+                    if (item.rotation === 0) {
+                        drawX = 0;
+                        drawY = 0;
+                    } else if (item.rotation === 90) {
+                        drawX = displayW;
+                        drawY = 0;
+                    } else if (item.rotation === 180) {
+                        drawX = displayW;
+                        drawY = displayH;
+                    } else if (item.rotation === 270) {
+                        drawX = 0;
+                        drawY = displayH;
+                    }
+                    
+                    page.drawImage(embedImg, {
+                        x: drawX,
+                        y: drawY,
+                        width: embedImg.width,
+                        height: embedImg.height,
+                        rotate: degrees(item.rotation)
+                    });
                 }
             }
         }
@@ -1734,12 +2006,9 @@ async function exportCombined(queueItems, defaultFileName) {
             }
         }
 
-        // Apply smart embedded image compression (OR grayscale image colorspace replacement)
-        const compressEnabled = document.getElementById('toggle-compress').checked;
-        const quality = parseFloat(document.getElementById('compress-quality').value || '0.9');
-        
-        if ((compressEnabled && quality < 1.0) || grayscaleEnabled) {
-            updateLoading(t('compiling_pdf'), "Optimizing embedded image elements...");
+        // Apply true image downsampling / degradation loop
+        if (compressEnabled) {
+            updateLoading(t('compiling_pdf'), "Downsampling image elements...");
             for (let i = 0; i < totalPages; i++) {
                 await new Promise(resolve => setTimeout(resolve, 0)); // Yield
                 const page = pages[i];
@@ -1751,8 +2020,9 @@ async function exportCombined(queueItems, defaultFileName) {
                             const xObject = outDoc.context.lookup(ref);
                             if (xObject instanceof PDFRawStream) {
                                 const subtype = xObject.dict.get(PDFName.of('Subtype'));
-                                if (subtype instanceof PDFName && subtype.decode() === 'Image') {
-                                    await recompressImageXObject(outDoc, xObject, compressEnabled ? quality : 1.0, grayscaleEnabled, false, canvasesToClean, objectUrlsToRevoke);
+                                if (subtype === PDFName.of('Image')) {
+                                    const mappedQuality = Math.min(0.7, Math.max(0.5, quality));
+                                    await recompressImageXObject(outDoc, xObject, mappedQuality);
                                 }
                             }
                         }
@@ -1866,7 +2136,6 @@ async function exportCombined(queueItems, defaultFileName) {
         outDoc.setCreator("SidePDF (https://pdf.sidelabs.net/)");
         outDoc.setAuthor("SidePDF (https://pdf.sidelabs.net/)");
 
-        // Merge speed optimization: useObjectStreams: false unless compressEnabled is true
         const finalBytes = await outDoc.save({ useObjectStreams: compressEnabled });
         
         downloadBlob(new Blob([finalBytes], { type: 'application/pdf' }), defaultFileName);
@@ -1907,6 +2176,7 @@ async function exportCombined(queueItems, defaultFileName) {
     }
 }
 
+
 // Export split PDF zip
 async function exportSplitAll() {
     showLoading(t('splitting_document'), t('splitting_document_sub'));
@@ -1940,7 +2210,7 @@ async function exportSplitAll() {
                         const buf = uploadedFiles[item.fileId];
                         const password = filePasswords[item.fileId] || "";
                         // Load buffer directly - no copies!
-                        loadedDocsPdfLib[item.fileId] = await PDFDocument.load(buf, { password });
+                        loadedDocsPdfLib[item.fileId] = await PDFDocument.load(buf, { password, ignoreEncryption: true });
                     }
                     const srcDoc = loadedDocsPdfLib[item.fileId];
                     const [copiedPage] = await singleDoc.copyPages(srcDoc, [item.pageIndex]);
@@ -2012,28 +2282,6 @@ async function exportSplitAll() {
                     convertPageToGrayscale(page);
                 }
 
-                // Apply smart image compression / grayscale colorspace replacement on split page
-                const compressEnabled = document.getElementById('toggle-compress').checked;
-                const quality = parseFloat(document.getElementById('compress-quality').value || '0.9');
-                
-                if ((compressEnabled && quality < 1.0) || grayscaleEnabled) {
-                    const resources = page.node.Resources();
-                    if (resources) {
-                        const xObjects = resources.get(PDFName.of('XObject'));
-                        if (xObjects instanceof PDFDict) {
-                            for (const [name, ref] of xObjects.entries()) {
-                                const xObject = singleDoc.context.lookup(ref);
-                                if (xObject instanceof PDFRawStream) {
-                                    const subtype = xObject.dict.get(PDFName.of('Subtype'));
-                                    if (subtype instanceof PDFName && subtype.decode() === 'Image') {
-                                        await recompressImageXObject(singleDoc, xObject, compressEnabled ? quality : 1.0, grayscaleEnabled, false, canvasesToClean, objectUrlsToRevoke);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
                 // White-Label Metadata Override
                 singleDoc.setProducer("SidePDF (https://pdf.sidelabs.net/)");
                 singleDoc.setCreator("SidePDF (https://pdf.sidelabs.net/)");
@@ -2041,6 +2289,7 @@ async function exportSplitAll() {
 
                 // Merge speed optimization: useObjectStreams: false unless compressEnabled is true
                 const pageBytes = await singleDoc.save({ useObjectStreams: compressEnabled });
+                const zipName = getExportFilename('zip'); // Use the dynamic filename prefix
                 zip.file(`split_page_${paddedNum}.pdf`, pageBytes);
             } else {
                 const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
@@ -2089,7 +2338,8 @@ async function exportSplitAll() {
         updateLoadingProgress(92);
 
         const zipBlob = await zip.generateAsync({ type: 'blob' });
-        downloadBlob(zipBlob, format === 'pdf' ? 'split_pages.zip' : `split_images_${format}.zip`);
+        const zipName = getExportFilename('zip'); // Use the dynamic filename prefix
+        downloadBlob(zipBlob, zipName);
         showToast("success", t('toast_zip_success'));
     } catch (err) {
         console.error("Split compilation failed:", err);
@@ -2124,6 +2374,7 @@ async function exportSplitAll() {
         await hideLoading();
     }
 }
+
 
 // Onboarding Sandbox Generator
 async function loadSamplePDF() {
@@ -2236,55 +2487,29 @@ function updateCompressionEstimate() {
     }
     
     if (!estimateText) return;
-    
-    if (!compressEnabled) {
-        estimateText.textContent = currentLang === 'ko' ? "압축 비활성화됨" : "Compression Disabled";
+
+    if (queue.length === 0) {
+        estimateText.textContent = currentLang === 'ko' ? "예상 파일 크기: ~ 0 KB" : "Estimated Size: ~ 0 KB";
         return;
     }
 
-    let totalEstimatedBytes = 0;
-    const filePagesCount = {};
+    // Compute the absolute sum of the original bytes of all unique active documents in the queue
+    let totalOriginalBytes = 0;
+    const processedFiles = new Set();
     queue.forEach(item => {
-        filePagesCount[item.fileId] = (filePagesCount[item.fileId] || 0) + 1;
-    });
-
-    queue.forEach(item => {
-        const fileId = item.fileId;
-        const originalBytes = uploadedFiles[fileId]?.byteLength || 200000;
-
-        if (item.type === 'pdf') {
-            if (quality >= 1.0) {
-                const pageCount = filePagesCount[fileId] || 1;
-                totalEstimatedBytes += originalBytes / pageCount;
-            } else {
-                const pageCount = filePagesCount[fileId] || 1;
-                const pageOriginalBytes = originalBytes / pageCount;
-                
-                const fixedBaseline = Math.min(pageOriginalBytes, Math.max(30000, pageOriginalBytes * 0.20));
-                const compressible = Math.max(0, pageOriginalBytes - fixedBaseline);
-                
-                const qualityFactor = 0.15 + 0.85 * Math.pow(quality, 2);
-                
-                totalEstimatedBytes += fixedBaseline + (compressible * qualityFactor);
-            }
-        } else if (item.type === 'image') {
-            if (quality >= 1.0) {
-                totalEstimatedBytes += originalBytes;
-            } else {
-                const fixedBaseline = 8192;
-                const compressible = Math.max(0, originalBytes - fixedBaseline);
-                
-                const isPNG = item.mimeType === 'image/png' || item.originalName.toLowerCase().endsWith('.png');
-                const efficiency = isPNG ? 0.3 : 0.85;
-                
-                const qualityFactor = 0.15 + 0.85 * Math.pow(quality, 2);
-                
-                totalEstimatedBytes += fixedBaseline + (compressible * efficiency * qualityFactor);
-            }
+        if (!processedFiles.has(item.fileId)) {
+            processedFiles.add(item.fileId);
+            const fileBytes = uploadedFiles[item.fileId]?.byteLength || 200000;
+            totalOriginalBytes += fileBytes;
         }
     });
 
-    const kb = totalEstimatedBytes / 1024;
+    let estimatedBytes = totalOriginalBytes;
+    if (compressEnabled) {
+        estimatedBytes = Math.round(totalOriginalBytes * quality);
+    }
+
+    const kb = estimatedBytes / 1024;
     const mb = kb / 1024;
     const sizeStr = mb >= 1 ? `${mb.toFixed(2)} MB` : `${kb.toFixed(0)} KB`;
     
@@ -2400,6 +2625,7 @@ async function getPdfPasswordModal(fileName, isRetry) {
 
 function downloadBlob(blob, fileName) {
     const url = URL.createObjectURL(blob);
+    generatedObjectUrls.push(url);
     const a = document.createElement('a');
     a.href = url;
     a.download = fileName;
@@ -2417,6 +2643,7 @@ function hexToRgbColor(hex) {
     return PDFLib.rgb(r, g, b);
 }
 
+// Escapes html strings
 function escapeHtml(str) {
     if (!str) return '';
     return str
@@ -2425,53 +2652,6 @@ function escapeHtml(str) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
-}
-
-function dataURItoArrayBuffer(dataURI) {
-    if (!dataURI || !dataURI.includes(',')) {
-        throw new Error("Invalid DataURI structure passed to dataURItoArrayBuffer");
-    }
-    const byteString = atob(dataURI.split(',')[1]);
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i);
-    }
-    return ab;
-}
-
-async function renderTextToImage(text, fontSize = 10, colorHex = '#333333', canvasesToClean, objectUrlsToRevoke) {
-    const scale = 2.5; 
-    const canvas = document.createElement('canvas');
-    if (canvasesToClean) canvasesToClean.push(canvas);
-    const ctx = canvas.getContext('2d');
-    
-    ctx.font = `${fontSize * scale}px "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif`;
-    const metrics = ctx.measureText(text);
-    
-    const textWidth = Math.ceil(metrics.width);
-    const textHeight = Math.ceil(fontSize * 1.5 * scale);
-    
-    canvas.width = textWidth + 10;
-    canvas.height = textHeight + 10;
-    
-    ctx.font = `${fontSize * scale}px "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif`;
-    ctx.fillStyle = colorHex;
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, 5, canvas.height / 2);
-    
-    const pngDataUrl = canvas.toDataURL('image/png');
-    const buffer = dataURItoArrayBuffer(pngDataUrl);
-    
-    // GPU memory release
-    canvas.width = 0;
-    canvas.height = 0;
-    
-    return {
-        buffer,
-        width: canvas.width / scale,
-        height: canvas.height / scale
-    };
 }
 
 // Initializer

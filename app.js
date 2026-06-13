@@ -64,6 +64,12 @@ const translations = {
         privacy_policy_link: "Privacy Policy",
         privacy_modal_title: "Privacy Policy",
         privacy_policy_text: `SidePDF ("we", "our", or "the Service") values your privacy and strictly adheres to global data protection standards.\n\n1. Zero Server Transfer & Local Processing\nOur application is entirely client-side. Any PDF documents or image assets you upload are processed strictly within your local browser memory sandbox (RAM and CPU threads). No structural segments of your file binaries are ever transmitted to or held on external servers.\n\n2. Google Tag Manager (GTM) Telemetry Disclosure\nTo observe utilization footprints and optimize interface utility layouts, we leverage Google Tag Manager (Container: GTM-W2XNXZ7N). This integration does NOT track, extract, or hold private information or raw asset bytes. It securely routes aggregated anonymized action tags, interface event counters, and generic browser environments to analysis gateways.\n\n3. Google AdSense & Cookie Compliance\nTo fund our infrastructure at zero cost to users, we may display programmatic Google AdSense advertisement widgets. Third-party ad networks utilize tracking cookies to analyze non-identifiable footprints and serve contextual marketing banners. You can disable cookie compliance allocations inside your native browser preference rules at any time.\n\n4. Contact and Compliance Support\nFor any engineering architecture or privacy metrics inquiries, reach out to our administration at:\n- Email: contact@sidelabs.net`,
+        terms_link: "Terms of Service",
+        terms_modal_title: "Terms of Service",
+        terms_policy_text: `SidePDF Terms of Service\n\n1. Acceptance of Terms\nBy accessing and using SidePDF (the "Service"), you agree to be bound by these Terms of Service. If you do not agree, please do not use the Service.\n\n2. Use of Service\nSidePDF is a client-side PDF utility suite. You may use it for personal or commercial document processing. Since all processing runs locally inside your browser, you are responsible for maintaining copies of your files.\n\n3. Disclaimer of Warranties\nThe Service is provided 'as is' without warranties of any kind, either express or implied. We do not guarantee that the Service will be uninterrupted, secure, or error-free.\n\n4. Limitation of Liability\nIn no event shall SidePDF or its administrators be liable for any direct, indirect, incidental, or consequential damages arising out of your use of the Service.\n\n5. Governing Law\nThese terms shall be governed by and construed in accordance with the laws of the jurisdiction in which the Service administrators operate.\n\nContact: contact@sidelabs.net`,
+        about_link: "About Us",
+        about_modal_title: "About Us",
+        about_policy_text: `About SidePDF\n\nSidePDF is a modern, serverless, and 100% client-side PDF utility suite developed by SideLabs.\n\nOur mission is to provide secure, high-performance, and private document processing tools completely inside the user's browser container. By leveraging WebAssembly and modern web APIs, we eliminate file transfers and server uploads, ensuring that your sensitive information never leaves your local machine.\n\nSideLabs specializes in building zero-trust, serverless utilities that respect user privacy and optimize client-side computational capabilities.\n\nContact: contact@sidelabs.net`,
         lang_label: "Language",
         add_files: "Add Files",
         clear: "Clear",
@@ -214,7 +220,7 @@ const translations = {
     reverse: "순서 반전",
     sort_by_name: "이름순 정렬",
     drop_title: "여기에 PDF 또는 이미지를 끌어다 놓으세요",
-    drop_desc: "여러 개의 PDF 파일이나 이미지(PNG, JPG)를 한 번에 마우스로 끌어다 놓으세요. 프로그램 설치 없이 브라우저 안에서 자유롭게 순서 변경, 회전, 편집이 가능합니다.",
+    drop_desc: "여러 PDF 파일이나 이미지(PNG, JPG)를 한 번에 마우스로 끌어다 놓으세요. 프로그램 설치 없이 브라우저 안에서 자유롭게 순서 변경, 회전, 편집이 가능합니다.",
     browse_files: "내 컴퓨터에서 찾기",
     demo_label: "기능을 먼저 테스트해보고 싶으신가요?",
     load_sample_pdf: "샘플 PDF 파일 가져오기",
@@ -234,7 +240,16 @@ const translations = {
     how_does_it_work: "보안 원리가 무엇인가요?",
     security_modal_title: "보안 및 개인정보 보호 안내",
     security_modal_desc: "SidePDF는 무자본 서버리스 아키텍처로 구현되었습니다. 사용자의 파일은 외부 서버로 일절 전송되지 않으며, 오직 현재 브라우저의 일시적인 샌드박스 메모리(RAM) 안에서만 처리된 후 즉시 휘발되므로 유출 가능성이 원천 차단됩니다.",
-    close_btn: "닫기",
+        close_btn: "닫기",
+        privacy_policy_link: "개인정보처리방침",
+        privacy_modal_title: "개인정보처리방침",
+        privacy_policy_text: "SidePDF(이하 '서비스')는 이용자의 개인정보를 소중하게 다루며, 개인정보보호법 등 관련 법령을 준수합니다.\n\n1. 데이터 전송 및 처리 방식 (Zero Server Transfer)\n본 서비스는 어떠한 형태의 유저 파일 데이터(PDF, 이미지)도 외부 서버로 전송하지 않는 100% 클라이언트 사이드(Client-Side) 웹 애플리케이션입니다. 모든 편집, 회전, 압축 연산은 이용자의 웹 브라우저(RAM 및 로컬 CPU) 내부 샌드박스 환경에서만 안전하게 실행되고 휘발됩니다.\n\n2. 구글 태그 매니저(GTM) 및 통계 분석 데이터 수집 안내\n본 서비스는 이용자가 어떤 기능(압축, 분할, 그레이스케일 변환 등)을 주로 활용하는지 익명 통계를 파악하여 서비스를 개선하기 위해 Google Tag Manager (컨테이너: GTM-W2XNXZ7N) 도구를 이용합니다. 이 과정에서 유저의 파일 원본이나 개인 식별 정보는 일절 수집되지 않으며, 오직 익명화된 비식별 행동 이벤트 로그 데이터만 구글 분석 시스템으로 라우팅되어 통계로 집계됩니다.\n\n3. 구글 애드센스 및 서드파티 쿠키(Cookie) 안내\n본 서비스는 지속적인 무료 서비스 제공 및 유지비 충당을 위해 Google AdSense 광고를 이용할 수 있습니다. 서드파티 광고 네트워크는 이용자의 브라우저 쿠키(Cookie)나 방문 이력을 기반으로 맞춤형 광고를 송출할 수 있습니다. 이용자는 언제든지 브라우저 설정을 변경하여 쿠키 수집을 차단하고 거부할 수 있습니다.\n\n4. 개인정보 보호책임자 및 문의처\n본 서비스의 보안 아키텍처 및 텔레메트리 데이터에 대한 문의사항은 아래 연락처로 문의해 주시기 바랍니다.\n- 이메일: contact@sidelabs.net",
+        terms_link: "이용약관",
+        terms_modal_title: "이용약관",
+        terms_policy_text: `SidePDF 이용약관\n\n1. 약관의 동의\nSidePDF(이하 '서비스')를 이용함으로써 귀하는 본 이용약관에 동의하게 됩니다. 약관에 동의하지 않으실 경우 서비스를 이용하실 수 없습니다.\n\n2. 서비스의 이용\n본 서비스는 브라우저 기반의 로컬 PDF 편집 도구입니다. 개인적 또는 상업적 목적으로 자유롭게 이용하실 수 있습니다. 모든 파일 처리는 이용자의 웹 브라우저 내에서만 안전하게 실행되므로, 원본 파일의 보관 책임은 이용자에게 있습니다.\n\n3. 보증의 부인\n본 서비스는 '있는 그대로(as is)' 제공되며, 명시적이거나 묵시적인 어떠한 보증도 제공하지 않습니다. 서비스가 중단 없이 작동하거나 오류가 없을 것임을 보증하지 않습니다.\n\n4. 책임의 제한\n서비스 운영자는 이용자가 서비스를 이용함에 따라 발생한 어떠한 직접적, 간접적, 부수적 손해에 대해서도 책임을 지지 않습니다.\n\n5. 준거법\n본 약관은 서비스 운영진이 속한 관할 지역의 법률에 따라 해석되고 규율됩니다.\n\n문의: contact@sidelabs.net`,
+        about_link: "소개",
+        about_modal_title: "소개",
+        about_policy_text: `SidePDF 소개\n\nSidePDF는 SideLabs가 개발한 서버리스 기반의 100% 로컬 클라이언트 사이드 PDF 유틸리티 플랫폼입니다.\n\n저희의 미션은 사용자의 민감한 문서 데이터가 외부 서버로 절대 유출되지 않도록, 브라우저 샌드박스 내부(RAM 및 CPU)에서 모든 최적화, 병합, 분할 연산을 완벽하게 처리하는 보안 환경을 구축하는 것입니다. WebAssembly 기술을 적용하여 파일 업로드 대기 시간을 제로로 줄이고 완벽한 개인정보 보호를 보장합니다.\n\nSideLabs는 사용자의 프라이버시를 존중하고 클라이언트 사이드 컴퓨팅 파워를 극적화하는 제로트러스트 보안 웹 도구를 전문적으로 설계합니다.\n\n문의: contact@sidelabs.net`,
     
     // 고급 필터 패널 (학술/엔지니어링 명사를 깔끔한 일반 SaaS 용어로 정제)
     filters_panel_title: "문서 용량 최적화 및 필터 고급 설정",
@@ -629,6 +644,46 @@ function wireActionListeners() {
         e.stopPropagation();
         e.preventDefault();
         const modal = document.getElementById('privacy-modal');
+        if (modal) modal.classList.remove('visible');
+    });
+
+    document.getElementById('terms-trigger')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const titleEl = document.getElementById('terms-modal-title');
+        const contentEl = document.getElementById('terms-modal-body-content');
+        const modal = document.getElementById('terms-modal');
+        
+        if (titleEl) titleEl.textContent = t('terms_modal_title');
+        if (contentEl) contentEl.textContent = t('terms_policy_text');
+        if (modal) modal.classList.add('visible');
+    });
+
+    document.getElementById('modal-terms-close')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const modal = document.getElementById('terms-modal');
+        if (modal) modal.classList.remove('visible');
+    });
+
+    document.getElementById('about-trigger')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const titleEl = document.getElementById('about-modal-title');
+        const contentEl = document.getElementById('about-modal-body-content');
+        const modal = document.getElementById('about-modal');
+        
+        if (titleEl) titleEl.textContent = t('about_modal_title');
+        if (contentEl) contentEl.textContent = t('about_policy_text');
+        if (modal) modal.classList.add('visible');
+    });
+
+    document.getElementById('modal-about-close')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const modal = document.getElementById('about-modal');
         if (modal) modal.classList.remove('visible');
     });
 }

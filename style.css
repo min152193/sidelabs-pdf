@@ -1474,8 +1474,8 @@ body.light-mode .loading-warning-text {
     }
 }
 
-/* Privacy Policy Modal Card & Body */
-.privacy-card {
+/* Privacy, Terms, and About Modal Cards & Bodies */
+.privacy-card, .terms-card, .about-card {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
@@ -1490,11 +1490,13 @@ body.light-mode .loading-warning-text {
     box-shadow: var(--shadow-lg);
 }
 
-.modal-overlay.visible .privacy-card {
+.modal-overlay.visible .privacy-card,
+.modal-overlay.visible .terms-card,
+.modal-overlay.visible .about-card {
     transform: scale(1);
 }
 
-.privacy-body {
+.privacy-body, .terms-body, .about-body {
     max-height: 60vh !important;
     overflow-y: auto !important;
     font-size: 0.82rem;

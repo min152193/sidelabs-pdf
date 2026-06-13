@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SidePDF — Ultimate Serverless PDF Suite</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Third Party Libraries via CDNs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-W2XNXZ7N');</script>
+    <!-- End Google Tag Manager -->
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W2XNXZ7N"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="app-container">
+        <!-- Sidebar Controls -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <!-- Dynamic Layer Icon -->
+                    <span class="logo-icon-container"></span>
+                    <span data-i18n="logo_title">SidePDF</span>
+                </div>
+            </div>
+
+            <!-- System Settings (Theme & Language) -->
+            <div class="system-settings-card">
+                <div class="field-row">
+                    <div class="field-group flex-1">
+                        <label for="theme-select">
+                            <span class="theme-icon-container"></span> <span data-i18n="theme_label">Theme</span>
+                        </label>
+                        <select id="theme-select" class="form-select">
+                            <option value="light" data-i18n="theme_light">Light</option>
+                            <option value="dark" data-i18n="theme_dark">Dark</option>
+                            <option value="auto" data-i18n="theme_auto">Auto</option>
+                        </select>
+                    </div>
+                    <div class="field-group flex-1">
+                        <label for="lang-select">
+                            <span class="lang-icon-container"></span> <span data-i18n="lang_label">Language</span>
+                        </label>
+                        <select id="lang-select" class="form-select">
+                            <option value="en">English</option>
+                            <option value="ko">한국어</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Queue Info Dashboard -->
+            <div class="queue-summary-card">
+                <div class="summary-stat">
+                    <span class="stat-label" data-i18n="total_pages">Total Pages</span>
+                    <span id="total-pages-badge" class="stat-value">0</span>
+                </div>
+                <div class="summary-actions">
+                    <button id="add-more-btn" class="btn btn-outline btn-sm">
+                        <span class="btn-icon-container"></span> <span data-i18n="add_files">Add Files</span>
+                    </button>
+                    <button id="clear-queue-btn" class="btn btn-danger btn-sm" disabled>
+                        <span class="btn-icon-container"></span> <span data-i18n="clear">Clear</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Feature Navigation Accordion -->
+            <div class="control-accordion">
+                <!-- Tool Selector Tabs -->
+                <div class="tool-tabs">
+                    <button class="tab-btn active" data-tab="tab-merge" data-i18n="merge_style">Merge & Style</button>
+                    <button class="tab-btn" data-tab="tab-split" data-i18n="split_extract">Split & Extract</button>
+                </div>
+
+                <!-- TAB 1: Merge & Style settings -->
+                <div id="tab-merge" class="tab-content active">
+                    <!-- Section: Compression toggle -->
+                    <div class="setting-group">
+                        <div class="setting-group-header">
+                            <span class="compress-icon-container"></span>
+                            <span data-i18n="lbl_compress_toggle">Reduce PDF Size (Compress)</span>
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-compress">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div id="compress-options" class="setting-group-body collapsed">
+                            <div class="field-group">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <label for="compress-quality" data-i18n="compress_quality">Compression Quality</label>
+                                    <span class="range-value" id="compress-quality-value">90%</span>
+                                </div>
+                                <input type="range" id="compress-quality" min="0.6" max="1.0" step="0.05" value="0.9">
+                            </div>
+                            <div class="range-status-indicator mt-1">
+                                <span class="info-range-icon-container"></span>
+                                <span id="compress-estimate-text">Estimated Size: -- KB</span>
+                            </div>
+                            <div id="compress-warning" class="compress-warning-alert mt-1 hidden" data-i18n="compress_warning_text">
+                                주의: 압축 화질을 75% 이하로 낮추면 텍스트 가독성이 크게 떨어질 수 있습니다.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Watermark Overlay -->
+                    <div class="setting-group">
+                        <div class="setting-group-header">
+                            <span class="watermark-icon-container"></span>
+                            <span data-i18n="watermark_overlay">Watermark Overlay</span>
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-watermark">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div id="watermark-options" class="setting-group-body collapsed">
+                            <div class="field-group">
+                                <label for="watermark-text" data-i18n="watermark_text">Watermark Text</label>
+                                <input type="text" id="watermark-text" value="CONFIDENTIAL" data-i18n-placeholder="watermark_text_ph" placeholder="Type custom text...">
+                            </div>
+                            <div class="field-row">
+                                <div class="field-group flex-2">
+                                    <label for="watermark-color" data-i18n="color">Color</label>
+                                    <div class="color-picker-wrapper">
+                                        <input type="color" id="watermark-color" value="#FF0000">
+                                        <span id="watermark-color-hex">#FF0000</span>
+                                    </div>
+                                </div>
+                                <div class="field-group flex-1">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <label for="watermark-opacity" data-i18n="opacity">Opacity</label>
+                                        <span class="range-value" id="watermark-opacity-value">30%</span>
+                                    </div>
+                                    <input type="range" id="watermark-opacity" min="0.05" max="1.0" step="0.05" value="0.3">
+                                </div>
+                            </div>
+                            <div class="field-row">
+                                <div class="field-group flex-1">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <label for="watermark-size" data-i18n="font_size">Font Size</label>
+                                        <span class="range-value" id="watermark-size-value">48px</span>
+                                    </div>
+                                    <input type="range" id="watermark-size" min="12" max="100" step="2" value="48">
+                                </div>
+                                <div class="field-group flex-1">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <label for="watermark-angle" data-i18n="angle">Angle (deg)</label>
+                                        <span class="range-value" id="watermark-angle-value">-45°</span>
+                                    </div>
+                                    <input type="range" id="watermark-angle" min="-90" max="90" step="5" value="-45">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Page Numbering -->
+                    <div class="setting-group">
+                        <div class="setting-group-header">
+                            <span class="numbering-icon-container"></span>
+                            <span data-i18n="page_numbering">Page Numbering</span>
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-numbering">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div id="numbering-options" class="setting-group-body collapsed">
+                            <div class="field-group">
+                                <label for="numbering-style" data-i18n="format">Format</label>
+                                <select id="numbering-style" class="form-select">
+                                    <option value="simple" data-i18n="simple_format">Simple ("1", "2")</option>
+                                    <option value="page-of" data-i18n="page_of_format" selected>Page of Total ("Page 1 of 10")</option>
+                                </select>
+                            </div>
+                            <div class="field-group">
+                                <label for="numbering-position" data-i18n="position">Position</label>
+                                <select id="numbering-position" class="form-select">
+                                    <option value="bottom-center" data-i18n="bottom_center" selected>Bottom Center</option>
+                                    <option value="bottom-right" data-i18n="bottom_right">Bottom Right</option>
+                                    <option value="top-right" data-i18n="top_right">Top Right</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: Split & Extract settings -->
+                <div id="tab-split" class="tab-content">
+                    <div class="setting-group">
+                        <div class="setting-group-header no-toggle">
+                            <span class="scissors-icon-container"></span>
+                            <span data-i18n="split_extract_config">Split & Extract Configuration</span>
+                        </div>
+                        <div class="setting-group-body">
+                            <div class="split-mode-selector">
+                                <label class="radio-card">
+                                    <input type="radio" name="split-mode" value="all" checked>
+                                    <div class="radio-card-content">
+                                        <span class="files-icon-container"></span>
+                                        <div class="radio-title" data-i18n="split_all_pages">Split All Pages</div>
+                                        <div class="radio-desc" data-i18n="split_all_desc">Generates a separate PDF for every page. Packaged as a single ZIP file.</div>
+                                    </div>
+                                </label>
+
+                                <label class="radio-card">
+                                    <input type="radio" name="split-mode" value="extract">
+                                    <div class="radio-card-content">
+                                        <span class="fileText-icon-container"></span>
+                                        <div class="radio-title" data-i18n="extract_specific_pages">Extract Specific Pages</div>
+                                        <div class="radio-desc" data-i18n="extract_desc">Extract only selected pages into a single combined PDF.</div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Section: Export Format Select -->
+                            <div id="split-format-wrapper" class="field-group mt-3">
+                                <label for="split-format-select" data-i18n="split_format_label">Export Format</label>
+                                <select id="split-format-select" class="form-select">
+                                    <option value="pdf" selected data-i18n="format_pdf">PDF Document (.pdf)</option>
+                                    <option value="jpg" data-i18n="format_jpg">JPEG Image (.jpg)</option>
+                                    <option value="png" data-i18n="format_png">PNG Image (.png)</option>
+                                </select>
+                            </div>
+
+                            <div id="extract-range-wrapper" class="field-group collapsed mt-3">
+                                <label for="extract-range" data-i18n="define_page_range">Define Page Range</label>
+                                <input type="text" id="extract-range" data-i18n-placeholder="define_range_ph" placeholder="e.g. 1-5, 8, 11-13">
+                                <div id="range-status" class="range-status-indicator mt-1">
+                                    <span class="info-range-icon-container"></span>
+                                    <span data-i18n="range_status_help">Enter page numbers or ranges. Matches will highlight in the grid.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Standalone Section: PDF Optimization & Processing Filters -->
+                <div class="setting-group mt-3" style="margin-top: 16px;">
+                    <div class="setting-group-header">
+                        <span class="filters-icon-container"></span>
+                        <span data-i18n="filters_panel_title">PDF Optimization & Processing Filters</span>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-filters">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div id="filters-options" class="setting-group-body collapsed">
+                        <div class="field-group" style="margin-top: 12px; display:flex; flex-direction:column; gap:12px;">
+                            <!-- Toggle 1: Strip OCR Text Stream -->
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <label class="switch-label" for="toggle-strip-ocr">
+                                    <span style="font-size:0.8rem; font-weight:600; color:var(--text-primary);" data-i18n="strip_ocr_title">Strip OCR Text Stream</span>
+                                    <span style="font-size:0.68rem; color:var(--text-muted); font-weight:400; line-height:1.3;" data-i18n="strip_ocr_desc">Clean out invisible OCR text overlay layers to cut down bytes.</span>
+                                </label>
+                                <label class="switch" style="flex-shrink:0;">
+                                    <input type="checkbox" id="toggle-strip-ocr">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <!-- Toggle 2: Flatten Vector Ink Strokes -->
+                            <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                                <label class="switch-label" for="toggle-flatten-vector">
+                                    <span style="font-size:0.8rem; font-weight:600; color:var(--text-primary);" data-i18n="flatten_vector_title">Flatten Vector Ink Strokes</span>
+                                    <span style="font-size:0.68rem; color:var(--text-muted); font-weight:400; line-height:1.3;" data-i18n="flatten_vector_desc">Consolidate heavily fragmented standalone paths to prevent lag.</span>
+                                </label>
+                                <label class="switch" style="flex-shrink:0;">
+                                    <input type="checkbox" id="toggle-flatten-vector">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <!-- Toggle 3: Convert to Grayscale (B&W Filter) -->
+                            <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                                <label class="switch-label" for="toggle-grayscale">
+                                    <span style="font-size:0.8rem; font-weight:600; color:var(--text-primary);" data-i18n="grayscale_title">Convert to Grayscale (B&W Filter)</span>
+                                    <span style="font-size:0.68rem; color:var(--text-muted); font-weight:400; line-height:1.3;" data-i18n="grayscale_desc">Map RGB/CMYK stream definitions into single-channel luminance.</span>
+                                </label>
+                                <label class="switch" style="flex-shrink:0;">
+                                    <input type="checkbox" id="toggle-grayscale">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Actions Sidebar Footer -->
+            <div class="sidebar-footer">
+                <button id="primary-action-btn" class="btn btn-primary btn-block" disabled>
+                    <span class="btn-icon-container"></span>
+                    <span data-i18n="compile_export">Compile & Export PDF</span>
+                </button>
+                <div class="footer-privacy-badge">
+                    <span class="lock-icon-container"></span>
+                    <button id="security-info-btn" class="security-link-btn" data-i18n="how_does_it_work">어떻게 작동하나요?</button>
+                    <span style="margin: 0 4px; opacity: 0.5;">•</span>
+                    <a href="#" id="privacy-policy-trigger" class="security-link-btn" data-i18n="privacy_policy_link">Privacy Policy</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace Area -->
+        <main class="main-content">
+            <!-- Top Toolbar for Batch Actions -->
+            <section class="top-toolbar">
+                <div class="toolbar-left">
+                    <button id="toolbar-add-btn" class="btn btn-outline btn-sm">
+                        <span class="btn-icon-container"></span> <span data-i18n="add_files">Add Files</span>
+                    </button>
+                    <div class="divider"></div>
+                    <div class="queue-meta-text">
+                        <span id="queue-count-files">0 files</span>
+                        <span class="bullet">•</span>
+                        <span id="queue-count-pages">0 pages</span>
+                    </div>
+                </div>
+                <div class="toolbar-right">
+                    <button id="batch-rotate-cw" class="btn btn-ghost btn-sm" title="Rotate all pages clockwise" disabled>
+                        <span class="btn-icon-container"></span> <span data-i18n="rotate_all">Rotate All</span>
+                    </button>
+                    <button id="batch-reverse" class="btn btn-ghost btn-sm" title="Reverse current page order" disabled>
+                        <span class="btn-icon-container"></span> <span data-i18n="reverse">Reverse</span>
+                    </button>
+                    <button id="batch-sort" class="btn btn-ghost btn-sm" title="Sort pages by source file name" disabled>
+                        <span class="btn-icon-container"></span> <span data-i18n="sort_by_name">Sort by Name</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Workspace Body -->
+            <div class="workspace-body">
+                <!-- Empty State (No Files Uploaded) -->
+                <div id="empty-state" class="empty-state">
+                    <div class="empty-container">
+                        <div class="icon-glow">
+                            <span class="fileUp-icon-container"></span>
+                        </div>
+                        <h2 data-i18n="drop_title">Drop your PDFs or Images here</h2>
+                        <p data-i18n="drop_desc">Drag multiple PDF files, PNGs, or JPGs to build your queue. Rearrange, rotate, and manipulate them completely in-browser.</p>
+                        
+                        <div class="upload-actions">
+                            <button id="browse-btn" class="btn btn-primary btn-lg">
+                                <span class="btn-icon-container"></span> <span data-i18n="browse_files">Browse Files</span>
+                            </button>
+                        </div>
+                        
+                        <div class="onboarding-demo">
+                            <span class="demo-label" data-i18n="demo_label">Want to test it out?</span>
+                            <button id="load-demo-btn" class="btn btn-ghost btn-sm">
+                                <span class="btn-icon-container"></span> <span data-i18n="load_sample_pdf">Load Sample PDF</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Page Queue Grid -->
+                <div id="preview-grid" class="preview-grid hidden"></div>
+            </div>
+            
+            <input type="file" id="file-input" multiple accept="application/pdf,image/png,image/jpeg" hidden>
+        </main>
+    </div>
+
+    <!-- MODAL: Password Unlock PDF -->
+    <!-- MODAL: Security Mechanism Explanation -->
+    <div id="security-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-security-lock-icon-container"></span>
+                <h3 id="modal-security-title" data-i18n="security_modal_title">Security & Privacy</h3>
+            </div>
+            <div class="modal-body">
+                <p data-i18n="security_modal_desc">
+                    모든 파일은 브라우저 내 로컬 환경에서 처리되거나, 전송 시 엔드투엔드(E2E) 암호화 후 작업 완료 즉시 서버에서 영구 삭제됩니다.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button id="modal-security-close" class="btn btn-primary" data-i18n="close_btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Privacy Policy -->
+    <div id="privacy-modal" class="modal-overlay">
+        <div class="modal-card privacy-card">
+            <div class="modal-header"><h3 id="privacy-modal-title" data-i18n="privacy_modal_title">Privacy Policy</h3></div>
+            <div class="modal-body privacy-body" id="privacy-modal-body-content"></div>
+            <div class="modal-footer"><button id="modal-privacy-close" class="btn btn-secondary" data-i18n="close_btn">Close</button></div>
+        </div>
+    </div>
+
+    <div id="password-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-lock-icon-container"></span>
+                <h3 id="modal-password-title" data-i18n="unlock_pdf_title">Unlock PDF Document</h3>
+            </div>
+            <div class="modal-body">
+                <p data-i18n="unlock_pdf_desc">This PDF document is encrypted and requires a password to open and process.</p>
+                <div class="field-group">
+                    <input type="password" id="modal-password-input" data-i18n-placeholder="modal_password_ph" placeholder="Password">
+                    <div id="modal-password-error" class="error-text hidden" data-i18n="incorrect_password">Incorrect password. Please try again.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="modal-password-cancel" class="btn btn-ghost" data-i18n="cancel">Cancel</button>
+                <button id="modal-password-submit" class="btn btn-primary" data-i18n="decrypt_file">Decrypt File</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Processing Overlay -->
+    <div id="loading-overlay" class="modal-overlay dark-overlay">
+        <div class="loader-card">
+            <div class="spinner-spinner">
+                <div class="double-bounce1"></div>
+                <div class="double-bounce2"></div>
+            </div>
+            <h3 id="loading-title" data-i18n="loading_title_processing">Processing PDF...</h3>
+            <p id="loading-text" data-i18n="loading_text_rendering">Extracting and rendering pages to visual queue.</p>
+            <div class="progress-bar-container">
+                <div id="loading-progress" class="progress-bar"></div>
+            </div>
+            <div id="loading-ad-container" class="loading-ad-container">
+                <div class="loading-ad-wrapper">
+                    <div class="ad-placeholder-label">Sponsored Advertisement</div>
+                    <div class="ad-placeholder-frame">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted); margin-bottom:4px;"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+                        <span style="font-size:0.7rem; color:var(--text-secondary); font-weight:600;">Google AdSense Partner Program</span>
+                    </div>
+                </div>
+            </div>
+            <div id="loading-warning" class="loading-warning-text" data-i18n="loading_warning">
+                Do not switch tabs or minimize the browser while processing large files to prevent execution throttling.
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- App Logic Script -->
+    <script src="app.js"></script>
+</body>
+</html>

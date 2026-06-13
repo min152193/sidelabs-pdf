@@ -179,121 +179,98 @@ const translations = {
         range_indicator_valid: "Expression targets {0} of {1} pages."
     },
     ko: {
-        logo_title: "SidePDF",
-        client_side_badge: "100% Client-Side",
-        total_pages: "총 페이지 수",
-        add_files: "파일 추가",
-        clear: "비우기",
-        merge_style: "병합 & 스타일링",
-        split_extract: "분할 & 추출",
-        watermark_overlay: "워터마크 오버레이",
-        watermark_text: "워터마크 텍스트",
-        color: "색상",
-        opacity: "불투명도",
-        font_size: "글자 크기",
-        angle: "각도 (도)",
-        page_numbering: "페이지 번호 추가",
-        format: "형식",
-        simple_format: "단순형 (\"1\", \"2\")",
-        page_of_format: "전체 페이지 포함 (\"Page 1 of 10\")",
-        position: "위치",
-        bottom_center: "하단 중앙",
-        bottom_right: "하단 우측",
-        top_right: "상단 우측",
-        split_extract_config: "분할 및 추출 설정",
-        split_all_pages: "모든 페이지 분할",
-        split_all_desc: "각 페이지를 개별 PDF로 분할하여 하나의 ZIP 파일로 다운로드합니다.",
-        extract_specific_pages: "특정 페이지 추출",
-        extract_desc: "선택한 페이지들만 하나의 결합된 PDF로 추출합니다.",
-        define_page_range: "페이지 범위 정의",
-        define_range_ph: "예: 1-5, 8, 11-13",
-        range_status_help: "페이지 번호나 범위를 입력하면 그리드에 하이라이트됩니다.",
-        compile_export: "PDF 컴파일 및 내보내기",
-        privacy_text: "서버로 데이터를 보내지 않습니다. 100% 안전함.",
-        rotate_all: "전체 회전",
-        reverse: "순서 반전",
-        sort_by_name: "이름순 정렬",
-        drop_title: "여기에 PDF 또는 이미지를 놓으세요",
-        drop_desc: "여러 PDF 파일, PNG, JPG 파일을 드래그하여 큐를 작성하세요. 브라우저에서 편리하게 정렬, 회전 및 편집할 수 있습니다.",
-        browse_files: "파일 찾기",
-        demo_label: "기능을 테스트해보고 싶으신가요?",
-        load_sample_pdf: "샘플 PDF 불러오기",
-        unlock_pdf_title: "PDF 문서 잠금 해제",
-        unlock_pdf_desc: "이 PDF 문서는 암호화되어 있어 열기 위한 비밀번호가 필요합니다.",
-        incorrect_password: "잘못된 비밀번호입니다. 다시 시도해 주세요.",
-        cancel: "취소",
-        decrypt_file: "파일 암호 해제",
-        theme_label: "테마",
-        theme_light: "라이트",
-        theme_dark: "다크",
-        theme_auto: "자동",
-        lang_label: "언어",
-        compress_quality: "압축 화질",
-        lbl_compress_toggle: "PDF 압축 (용량 줄이기)",
-        compress_warning_text: "주의: 압축 화질을 75% 이하로 낮추면 텍스트 가독성이 크게 떨어질 수 있습니다.",
-        security_tooltip_text: "모든 파일은 브라우저 내 로컬 환경에서 처리되거나, 전송 시 엔드투엔드(E2E) 암호화 후 작업 완료 즉시 서버에서 영구 삭제됩니다.",
-        how_does_it_work: "어떻게 작동하나요?",
-        security_modal_title: "보안 및 개인정보 보호",
-        security_modal_desc: "모든 파일은 브라우저 내 로컬 환경에서 처리되거나, 전송 시 엔드투엔드(E2E) 암호화 후 작업 완료 즉시 서버에서 영구 삭제됩니다.",
-        close_btn: "닫기",
-        privacy_policy_link: "개인정보처리방침",
-        privacy_modal_title: "개인정보처리방침",
-        privacy_policy_text: "SidePDF(이하 '서비스')는 이용자의 개인정보를 소중하게 다루며, 개인정보보호법 등 관련 법령을 준수합니다.\n\n1. 데이터 전송 및 처리 방식 (Zero Server Transfer)\n본 서비스는 어떠한 형태의 유저 파일 데이터(PDF, 이미지)도 외부 서버로 전송하지 않는 100% 클라이언트 사이드(Client-Side) 웹 애플리케이션입니다. 모든 편집, 회전, 압축 연산은 이용자의 웹 브라우저(RAM 및 로컬 CPU) 내부 샌드박스 환경에서만 안전하게 실행되고 휘발됩니다.\n\n2. 구글 태그 매니저(GTM) 및 통계 분석 데이터 수집 안내\n본 서비스는 이용자가 어떤 기능(압축, 분할, 그레이스케일 변환 등)을 주로 활용하는지 익명 통계를 파악하여 서비스를 개선하기 위해 Google Tag Manager (컨테이너: GTM-W2XNXZ7N) 도구를 이용합니다. 이 과정에서 유저의 파일 원본이나 개인 식별 정보는 일절 수집되지 않으며, 오직 익명화된 비식별 행동 이벤트 로그 데이터만 구글 분석 시스템으로 라우팅되어 통계로 집계됩니다.\n\n3. 구글 애드센스 및 서드파티 쿠키(Cookie) 안내\n본 서비스는 지속적인 무료 서비스 제공 및 유지비 충당을 위해 Google AdSense 광고를 이용할 수 있습니다. 서드파티 광고 네트워크는 이용자의 브라우저 쿠키(Cookie)나 방문 이력을 기반으로 맞춤형 광고를 송출할 수 있습니다. 이용자는 언제든지 브라우저 설정을 변경하여 쿠키 수집을 차단하고 거부할 수 있습니다.\n\n4. 개인정보 보호책임자 및 문의처\n본 서비스의 보안 아키텍처 및 텔레메트리 데이터에 대한 문의사항은 아래 연락처로 문의해 주시기 바랍니다.\n- 이메일: contact@sidelabs.net",
-        filters_panel_title: "PDF 최적화 및 프로세싱 필터",
-        strip_ocr_title: "OCR 텍스트 스트림 제거",
-        strip_ocr_desc: "보이지 않는 OCR 텍스트 레이어를 제거하여 용량을 줄입니다.",
-        flatten_vector_title: "벡터 잉크 획 병합 (플래튼)",
-        flatten_vector_desc: "조각난 펜 필기 벡터 경로를 하나로 병합하여 랙을 줄입니다.",
-        grayscale_title: "그레이스케일 변환 (흑백 필터)",
-        grayscale_desc: "RGB/CMYK 색상 정의를 1채널 조도 벡터로 매핑합니다.",
-        split_format_label: "내보내기 형식",
-        format_pdf: "PDF 문서 (.pdf)",
-        format_jpg: "JPEG 이미지 (.jpg)",
-        format_png: "PNG 이미지 (.png)",
-        
-        toast_no_valid: "No valid files detected. Drop PDF, JPEG, or PNG files only.",
-        toast_skipped_dup: "Some files were already in the queue and were skipped.",
-        toast_load_fail: "Failed to load files fully.",
-        toast_parse_fail: "\"{0}\" 분석 실패: {1}",
-        toast_download_success: "제한이 해제된 PDF 다운로드가 완료되었습니다!",
-        toast_merge_success: "스타일이 적용된 PDF 다운로드가 완료되었습니다!",
-        toast_extract_success: "선택한 페이지 추출 및 다운로드가 완료되었습니다!",
-        toast_zip_success: "분할된 페이지 ZIP 파일 생성이 완료되었습니다!",
-        toast_queue_cleared: "작업 공간이 비워졌습니다.",
-        toast_reversed: "페이지 순서가 반전되었습니다.",
-        toast_sorted: "대기열이 파일 이름순으로 정렬되었습니다.",
-        toast_rotated_all: "그리드의 모든 페이지가 회전되었습니다.",
-        toast_empty_queue: "작업 공간이 비어 있습니다. 먼저 파일을 로드하세요.",
-        toast_invalid_range: "추출할 유효한 페이지 범위를 정의하세요.",
-        toast_demo_loaded: "샘플 PDF가 생성되고 로드되었습니다!",
-        toast_invalid_ranges_err: "잘못된 페이지 범위: {0}",
-        toast_no_valid_pages_err: "추출하도록 선택된 유효한 페이지가 없습니다.",
-        toast_split_fail: "분할 실패: {0}",
-        toast_compile_fail: "컴파일 실패: {0}",
-        toast_pw_aborted: "비밀번호 입력이 취소되었습니다.",
-        toast_unlock_success: "파일 암호가 성공적으로 해제되었습니다.",
-        toast_clear_confirm: "대기 중인 활성 작업 공간을 비으시겠습니까?",
+    logo_title: "SidePDF",
+    client_side_badge: "로컬 보안 처리",
+    total_pages: "총 페이지 수",
+    add_files: "파일 추가",
+    clear: "비우기",
+    merge_style: "병합 및 편집",
+    split_extract: "분할 및 추출",
+    watermark_overlay: "워터마크 삽입",
+    watermark_text: "문구 입력",
+    color: "글자 색상",
+    opacity: "투명도",
+    font_size: "글자 크기",
+    angle: "회전 각도",
+    page_numbering: "페이지 번호 매기기",
+    format: "표시 형식",
+    simple_format: "기본형 (1, 2, 3...)",
+    page_of_format: "전체 페이지 포함 (Page 1 of 10)",
+    position: "출력 위치",
+    bottom_center: "하단 중앙",
+    bottom_right: "하단 우측",
+    top_right: "상단 우측",
+    split_extract_config: "분할 및 추출 상세 설정",
+    split_all_pages: "모든 페이지 각각 나누기",
+    split_all_desc: "모든 페이지를 한 장씩 개별 PDF 파일로 분할한 뒤, 하나의 ZIP 압축 파일로 다운로드합니다.",
+    extract_specific_pages: "원하는 페이지 지정 추출",
+    extract_desc: "선택하거나 입력한 특정 페이지들만 쏙 골라내어 하나의 결합된 PDF 파일로 만듭니다.",
+    define_page_range: "추출할 페이지 범위 입력",
+    define_range_ph: "입력 예시: 1-5, 8, 11-13",
+    range_status_help: "페이지 번호나 범위를 입력하면 상단 그리드 화면에 자동으로 하이라이트됩니다.",
+    compile_export: "최종 PDF 변환 및 다운로드",
+    privacy_text: "안심하세요. 모든 파일은 전송 없이 브라우저 내에서 100% 안전하게 처리됩니다.",
+    rotate_all: "전체 회전",
+    reverse: "순서 반전",
+    sort_by_name: "이름순 정렬",
+    drop_title: "여기에 PDF 또는 이미지를 끌어다 놓으세요",
+    drop_desc: "여러 개의 PDF 파일이나 이미지(PNG, JPG)를 한 번에 마우스로 끌어다 놓으세요. 프로그램 설치 없이 브라우저 안에서 자유롭게 순서 변경, 회전, 편집이 가능합니다.",
+    browse_files: "내 컴퓨터에서 찾기",
+    demo_label: "기능을 먼저 테스트해보고 싶으신가요?",
+    load_sample_pdf: "샘플 PDF 파일 가져오기",
+    unlock_pdf_title: "비밀번호가 걸린 PDF 문서입니다",
+    unlock_pdf_desc: "이 파일은 보안을 위해 암호화되어 있습니다. 열기 위한 비밀번호를 입력해 주세요.",
+    cancel: "취소",
+    decrypt_file: "암호 해제 및 가져오기",
+    theme_label: "화면 테마",
+    theme_light: "라이트 모드",
+    theme_dark: "다크 모드",
+    theme_auto: "기기 설정 동기화",
+    lang_label: "언어 설정",
+    compress_quality: "압축 강도 (화질 균형)",
+    lbl_compress_toggle: "PDF 용량 최적화 (용량 줄이기)",
+    compress_warning_text: "주의: 압축 화질을 75% 이하로 너무 낮추면 문서 내 작은 글씨의 가독성이 떨어질 수 있습니다.",
+    security_tooltip_text: "SidePDF는 무자본 서버리스 아키텍처로 구현되었습니다. 사용자의 파일은 중앙 서버로 절대 전송되지 않으며, 오직 현재 브라우저의 일시적인 샌드박스 메모리 안에서만 연산된 후 완전히 파기되므로 유출 우려가 0%입니다.",
+    how_does_it_work: "보안 원리가 무엇인가요?",
+    security_modal_title: "보안 및 개인정보 보호 안내",
+    security_modal_desc: "SidePDF는 무자본 서버리스 아키텍처로 구현되었습니다. 사용자의 파일은 외부 서버로 일절 전송되지 않으며, 오직 현재 브라우저의 일시적인 샌드박스 메모리(RAM) 안에서만 처리된 후 즉시 휘발되므로 유출 가능성이 원천 차단됩니다.",
+    close_btn: "닫기",
+    
+    // 고급 필터 패널 (학술/엔지니어링 명사를 깔끔한 일반 SaaS 용어로 정제)
+    filters_panel_title: "문서 용량 최적화 및 필터 고급 설정",
+    strip_ocr_title: "불필요한 OCR 텍스트 레이어 제거",
+    strip_ocr_desc: "스캔 문서 뒤에 숨겨진 텍스트 메타데이터 스트림을 삭제하여 용량을 추가로 확보합니다.",
+    flatten_vector_title: "태블릿 필기 데이터 병합 (렉 줄이기)",
+    flatten_vector_desc: "굿노트, 노타빌리티 등에서 조각난 펜 필기(벡터 획) 경로를 하나로 합쳐 파일 열람 시 버벅임과 렉을 줄입니다.",
+    grayscale_title: "출력 필터 흑백 변환 (그레이스케일)",
+    grayscale_desc: "컬러 문서의 RGB/CMYK 색상 요소를 단색 무채색 채널로 일괄 매핑하여 인쇄용 용량을 극한으로 줄입니다.",
+    
+    split_format_label: "저장할 확장자 형식",
+    format_pdf: "PDF 문서 파일 (.pdf)",
+    format_jpg: "JPEG 이미지 이미지 (.jpg)",
+    format_png: "PNG 고화질 이미지 (.png)",
 
-        loading_files: "파일을 불러오고 처리하는 중...",
-        loading_warning: "대용량 파일 처리 시 브라우저 탭을 전환하거나 최소화하면 처리가 일시 중단될 수 있으므로 화면을 그대로 유지해 주세요.",
-        purging_workspace: "작업 공간 초기화 중...",
-        rotating_pipeline: "페이지들을 회전하는 중...",
-        reversing_layout: "문서 레이아웃 순서 반전 중...",
-        sorting_pipeline: "이름순으로 정렬하는 중...",
-        compiling_pdf: "PDF 컴파일 중...",
-        unlocking_assembling: "페이지 잠금 해제 및 어셈블리 중 ({0}/{1})...",
-        stamping_watermark: "워터마크 스탬기 중...",
-        stamping_watermark_sub: "사용자 정의 대각선 워터마크 텍스트 오버레이 중...",
-        numbering_pages: "페이지 번호 매기는 중...",
-        numbering_pages_sub: "문서 바닥글 마커 도장 찍는 중...",
-        saving_final: "최종 문서 저장 중...",
-        saving_final_sub: "PDF 바이너리 레이아웃 스트림 생성 중...",
-        splitting_document: "문서 분할 중...",
-        splitting_document_sub: "개별 단일 페이지 문서 패키징 중...",
-        packaging_zip: "ZIP 아카이브 압축 중...",
-        packaging_zip_sub: "Generating ZIP file stream...",
-        generating_sample: "샘플 PDF 생성 중...",
-        generating_sample_sub: "로컬 환경에서 데모 문서 합성 중...",
+    // 실시간 로딩 텍스트 (사용자가 진행 상황을 직관적으로 보게 동사형 명사로 정제)
+        loading_files: "파일을 읽어와 분석하는 중...",
+        loading_warning: "대용량 문서를 처리할 때는 브라우저 탭을 전환하거나 창을 최소화하면 연산이 일시 중단될 수 있습니다. 변환이 끝날 때까지 이 화면을 유지해 주세요.",
+        purging_workspace: "작업 공간을 깨끗하게 비우는 중...",
+        rotating_pipeline: "선택한 페이지들을 회전시키는 중...",
+        reversing_layout: "문서의 페이지 정렬 순서를 뒤집는 중...",
+        sorting_pipeline: "파일 이름을 기준으로 순서를 정렬하는 중...",
+        compiling_pdf: "새로운 PDF 문서 구성 중...",
+        unlocking_assembling: "페이지 데이터 인덱싱 및 재배치 중 ({0}/{1})...",
+        stamping_watermark: "페이지 위에 워터마크 레이어 합성 중...",
+        stamping_watermark_sub: "설정하신 대각선 반투명 텍스트 오버레이 적용 중...",
+        numbering_pages: "바닥글 페이지 번호 생성 중...",
+        numbering_pages_sub: "문서 하단 하단 영역에 고유 일련번호 마킹 중...",
+        saving_final: "최종 최적화 문서 빌드 중...",
+        saving_final_sub: "출력용 PDF 바이너리 바이너리 스트림 파일 생성 중...",
+        splitting_document: "지정한 단일 페이지 쪼개는 중...",
+        splitting_document_sub: "개별 한 장짜리 독립 문서로 패키징 처리 중...",
+        packaging_zip: "분할된 파일 압축 패키지 구성 중...",
+        packaging_zip_sub: "ZIP 압축 스트림 변환 엔진 가동 중...",
+        generating_sample: "테스트용 데모 파일 생성 중...",
+        generating_sample_sub: "유저 브라우저 환경에서 자체 샘플 문서 합성 중...",
         loading_title_processing: "Processing PDF...",
         loading_text_rendering: "Extracting and rendering pages to visual queue.",
         
@@ -376,6 +353,26 @@ function applyTheme(theme) {
     }
 }
 
+function updateDocumentMetadata(lang) {
+    const metaConfig = {
+        ko: {
+            title: "SidePDF - 안전한 로컬 PDF 편집기",
+            desc: "파일 업로드 없는 PDF 최적화. 압축, 분할, 병합, 편집 잠금 해제를 개인정보 걱정 없이 해결하세요."
+        },
+        en: {
+            title: "SidePDF - Private Secure PDF Suite",
+            desc: "Optimize, split, and merge documents directly in your browser. Zero server uploads, absolute data privacy, and instant local processing."
+        }
+    };
+    const config = metaConfig[lang] || metaConfig['en'];
+    
+    document.title = config.title;
+    
+    document.querySelector('meta[name="description"]')?.setAttribute('content', config.desc);
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content', config.title);
+    document.querySelector('meta[property="og:description"]')?.setAttribute('content', config.desc);
+}
+
 // Language Engine Setup
 function initLanguage() {
     const langSelect = document.getElementById('lang-select');
@@ -393,12 +390,14 @@ function initLanguage() {
     currentLang = savedLang;
 
     updateUILanguage();
+    updateDocumentMetadata(currentLang);
 
     langSelect.addEventListener('change', (e) => {
         const lang = e.target.value;
         localStorage.setItem('lang', lang);
         currentLang = lang;
         updateUILanguage();
+        updateDocumentMetadata(currentLang);
     });
 }
 
@@ -406,7 +405,6 @@ function initLanguage() {
 function renderInterfaceIcons() {
     document.querySelectorAll('.logo-icon-container').forEach(el => el.innerHTML = getIconSvg('layers'));
     document.querySelectorAll('.theme-icon-container').forEach(el => el.innerHTML = getIconSvg('sunMoon'));
-    document.querySelectorAll('.lang-icon-container').forEach(el => el.innerHTML = getIconSvg('languages'));
     document.querySelectorAll('#add-more-btn .btn-icon-container').forEach(el => el.innerHTML = getIconSvg('plus'));
     document.querySelectorAll('#clear-queue-btn .btn-icon-container').forEach(el => el.innerHTML = getIconSvg('trash2'));
     document.querySelectorAll('.compress-icon-container').forEach(el => el.innerHTML = getIconSvg('zap'));

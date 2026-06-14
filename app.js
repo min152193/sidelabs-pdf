@@ -112,7 +112,7 @@ const translations = {
         reverse: "Reverse",
         sort_by_name: "Sort by Name",
         drop_title: "Drop your PDFs or Images here",
-        drop_desc: "Drag multiple PDF files, PNGs, or JPGs to build your queue. Rearrange, rotate, and manipulate them completely in-browser.",
+        drop_desc: "Drag multiple PDF files, PNGs, JPGs, or HEIC/HEIF images to build your queue. Rearrange, rotate, and manipulate them completely in-browser.",
         browse_files: "Browse Files",
         demo_label: "Want to test it out?",
         load_sample_pdf: "Load Sample PDF",
@@ -139,7 +139,7 @@ const translations = {
         format_jpg: "JPEG Image (.jpg)",
         format_png: "PNG Image (.png)",
         
-        toast_no_valid: "No valid files detected. Drop PDF, JPEG, or PNG files only.",
+        toast_no_valid: "No valid files detected. Drop PDF, JPEG, PNG, or HEIC/HEIF files only.",
         toast_skipped_dup: "Some files were already in the queue and were skipped.",
         toast_load_fail: "Failed to load files fully.",
         toast_parse_fail: "Parse failure on \"{0}\": {1}",
@@ -229,7 +229,7 @@ const translations = {
         reverse: "순서 반전",
         sort_by_name: "이름순 정렬",
         drop_title: "여기에 PDF 또는 이미지를 놓으세요",
-        drop_desc: "여러 PDF 파일, PNG, JPG 파일을 드래그하여 큐를 작성하세요. 브라우저에서 편리하게 정렬, 회전 및 편집할 수 있습니다.",
+        drop_desc: "여러 PDF 파일, PNG, JPG, HEIC/HEIF 이미지를 드래그하여 큐를 작성하세요. 브라우저에서 편리하게 정렬, 회전 및 편집할 수 있습니다.",
         browse_files: "파일 찾기",
         demo_label: "기능을 테스트해보고 싶으신가요?",
         load_sample_pdf: "샘플 PDF 불러오기",
@@ -279,7 +279,7 @@ const translations = {
         format_jpg: "JPEG 이미지 (.jpg)",
         format_png: "PNG 이미지 (.png)",
         
-        toast_no_valid: "유효한 파일이 감지되지 않았습니다. PDF, JPEG, PNG 파일만 지원합니다.",
+        toast_no_valid: "유효한 파일이 감지되지 않았습니다. PDF, JPEG, PNG, HEIC/HEIF 파일만 지원합니다.",
         toast_skipped_dup: "일부 중복 파일이 대기열에서 제외되었습니다.",
         toast_load_fail: "파일을 완전히 로드하지 못했습니다.",
         toast_parse_fail: "\"{0}\" 분석 실패: {1}",
@@ -958,12 +958,14 @@ async function handleUploadedFiles(files) {
     showLoadingScreen(t('loading_files'));
     try {
         const validFiles = Array.from(files).filter(file => {
-            const isPDF = file.type === 'application/pdf' || file.name.endsWith('.pdf');
-            const isImg = file.type.startsWith('image/') && (
-                file.name.endsWith('.png') || 
-                file.name.endsWith('.jpg') || 
-                file.name.endsWith('.jpeg')
-            );
+            const nameLower = file.name.toLowerCase();
+            const isPDF = file.type === 'application/pdf' || nameLower.endsWith('.pdf');
+            const isHeic = nameLower.endsWith('.heic') || nameLower.endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif';
+            const isImg = (file.type.startsWith('image/') && (
+                nameLower.endsWith('.png') || 
+                nameLower.endsWith('.jpg') || 
+                nameLower.endsWith('.jpeg')
+            )) || isHeic;
             return isPDF || isImg;
         });
 
@@ -981,29 +983,69 @@ async function handleUploadedFiles(files) {
         }
 
         for (const file of newFiles) {
-            const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-            
-            const arrayBuffer = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onprogress = (e) => {
-                    if (e.lengthComputable) {
-                        const percent = Math.round((e.loaded / e.total) * 100);
-                        updateLoading(t('loading_files') + ` (${file.name})`, `${percent}%`);
-                        updateLoadingProgress(percent);
-                    }
-                };
-                reader.onload = () => resolve(new Uint8Array(reader.result)); // RAM optimization: store as Uint8Array directly
-                reader.onerror = () => reject(new Error("File read error"));
-                reader.readAsArrayBuffer(file);
-            });
-            
-            uploadedFiles[fileId] = arrayBuffer;
+            const nameLower = file.name.toLowerCase();
+            const isHeic = nameLower.endsWith('.heic') || nameLower.endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif';
 
-            if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-                // Pass buffer directly - no copies!
-                await parseAndAddPDFToQueue(arrayBuffer, file.name, fileId);
-            } else if (file.type.startsWith('image/')) {
-                await parseAndAddImageToQueue(file, fileId, arrayBuffer);
+            if (isHeic) {
+                try {
+                    updateLoading(t('loading_files') + ` (${file.name})`, "Converting HEIC/HEIF...");
+                    if (typeof heic2any === 'undefined') {
+                        throw new Error("HEIC conversion library (heic2any) is not loaded.");
+                    }
+                    const conversionResult = await heic2any({
+                        blob: file,
+                        toType: "image/jpeg",
+                        quality: 0.9
+                    });
+                    const blobs = Array.isArray(conversionResult) ? conversionResult : [conversionResult];
+                    
+                    for (let i = 0; i < blobs.length; i++) {
+                        const blob = blobs[i];
+                        const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                        const newName = blobs.length > 1 ? `${baseName}_${i + 1}.jpg` : `${baseName}.jpg`;
+                        const convertedFile = new File([blob], newName, { type: 'image/jpeg' });
+                        
+                        const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+                        
+                        const arrayBuffer = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = () => resolve(new Uint8Array(reader.result));
+                            reader.onerror = () => reject(new Error("File read error"));
+                            reader.readAsArrayBuffer(convertedFile);
+                        });
+                        
+                        uploadedFiles[fileId] = arrayBuffer;
+                        await parseAndAddImageToQueue(convertedFile, fileId, arrayBuffer);
+                    }
+                } catch (convErr) {
+                    console.error("HEIC conversion error:", convErr);
+                    showToast("error", `Failed to convert HEIC/HEIF file: ${file.name}`);
+                }
+            } else {
+                const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+                
+                const arrayBuffer = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onprogress = (e) => {
+                        if (e.lengthComputable) {
+                            const percent = Math.round((e.loaded / e.total) * 100);
+                            updateLoading(t('loading_files') + ` (${file.name})`, `${percent}%`);
+                            updateLoadingProgress(percent);
+                        }
+                    };
+                    reader.onload = () => resolve(new Uint8Array(reader.result)); // RAM optimization: store as Uint8Array directly
+                    reader.onerror = () => reject(new Error("File read error"));
+                    reader.readAsArrayBuffer(file);
+                });
+                
+                uploadedFiles[fileId] = arrayBuffer;
+
+                if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                    // Pass buffer directly - no copies!
+                    await parseAndAddPDFToQueue(arrayBuffer, file.name, fileId);
+                } else {
+                    await parseAndAddImageToQueue(file, fileId, arrayBuffer);
+                }
             }
         }
 

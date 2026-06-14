@@ -33,6 +33,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -419,7 +420,7 @@
                             <span class="fileUp-icon-container"></span>
                         </div>
                         <h2 data-i18n="drop_title">Drop your PDFs or Images here</h2>
-                        <p data-i18n="drop_desc">Drag multiple PDF files, PNGs, or JPGs to build your queue. Rearrange, rotate, and manipulate them completely in-browser.</p>
+                        <p data-i18n="drop_desc">Drag multiple PDF files, PNGs, JPGs, or HEIC/HEIF images to build your queue. Rearrange, rotate, and manipulate them completely in-browser.</p>
                         
                         <div class="upload-actions">
                             <button id="browse-btn" class="btn btn-primary btn-lg">
@@ -441,7 +442,7 @@
                 
             </div>
             
-            <input type="file" id="file-input" multiple accept="application/pdf,image/png,image/jpeg" hidden>
+            <input type="file" id="file-input" multiple accept="application/pdf,image/png,image/jpeg,image/heic,image/heif,.heic,.heif" hidden>
         </main>
     </div>
 

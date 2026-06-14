@@ -1782,7 +1782,7 @@ async function exportCombined(queueItems, defaultFileName) {
             updateLoadingProgress(Math.round((idx / totalItems) * 60)); 
 
             if (item.type === 'pdf') {
-                if (compressEnabled) {
+                if (compressEnabled && quality < 1.0) {
                     const arrayBuffer = uploadedFiles[item.fileId];
                     const password = filePasswords[item.fileId] || "";
                     updateLoading(t('unlocking_assembling', idx + 1, totalItems) + " (Rasterizing)", item.originalName);
@@ -2212,7 +2212,7 @@ async function exportSplitAll() {
                 const singleDoc = await PDFDocument.create();
 
                 if (item.type === 'pdf') {
-                    if (compressEnabled) {
+                    if (compressEnabled && quality < 1.0) {
                         const buf = uploadedFiles[item.fileId];
                         const password = filePasswords[item.fileId] || "";
                         
@@ -2547,6 +2547,9 @@ function updateCompressionEstimate() {
     let estimatedBytes = totalOriginalBytes;
     if (compressEnabled) {
         estimatedBytes = Math.round(totalOriginalBytes * quality);
+        if (estimatedBytes > totalOriginalBytes) {
+            estimatedBytes = totalOriginalBytes;
+        }
     }
 
     const kb = estimatedBytes / 1024;

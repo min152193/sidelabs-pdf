@@ -71,7 +71,8 @@ const translations = {
         terms_policy_text: `SidePDF Terms of Service\n\n1. Acceptance of Terms\nBy accessing and using SidePDF (the "Service"), you agree to be bound by these Terms of Service. If you do not agree, please do not use the Service.\n\n2. Use of Service\nSidePDF is a client-side PDF utility suite. You may use it for personal or commercial document processing. Since all processing runs locally inside your browser, you are responsible for maintaining copies of your files.\n\n3. Disclaimer of Warranties\nThe Service is provided 'as is' without warranties of any kind, either express or implied. We do not guarantee that the Service will be uninterrupted, secure, or error-free.\n\n4. Limitation of Liability\nIn no event shall SidePDF or its administrators be liable for any direct, indirect, incidental, or consequential damages arising out of your use of the Service.\n\n5. Governing Law\nThese terms shall be governed by and construed in accordance with the laws of the jurisdiction in which the Service administrators operate.\n\nContact: contact@sidelabs.net`,
         about_link: "About Us",
         about_modal_title: "About Us",
-        about_policy_text: `About SidePDF\n\nSidePDF is a modern, serverless, and 100% client-side PDF utility suite developed by SideLabs.\n\nOur mission is to provide secure, high-performance, and private document processing tools completely inside the user's browser container. By leveraging WebAssembly and modern web APIs, we eliminate file transfers and server uploads, ensuring that your sensitive information never leaves your local machine.\n\nSideLabs specializes in building zero-trust, serverless utilities that respect user privacy and optimize client-side computational capabilities.\n\nContact: contact@sidelabs.net`,
+        about_policy_text: `About SidePDF\n\nSidePDF is a modern, serverless, and 100% client-side PDF utility suite developed by SideLabs.\n\nOur mission is to provide secure, high-performance, and private document processing tools completely inside the user's browser container. By leveraging WebAssembly and modern web APIs, we eliminate file transfers and server uploads, ensuring that your sensitive information never leaves your local machine.\n\n[Core Features Overview]\n- PDF Merge & Split: Combines multiple PDFs and images or extracts targeted layouts sequentially.\n- Fit to Canvas / Letterboxing: Centers and scales pages into custom dimensions (A4, Letter, 16:9) with whitespace padding preserved without distortion.\n- Smart Image Optimization: Lowers baseline byte metrics by downsampling high-density rasterized streams natively based on slider parameters.\n- B&W / Grayscale Conversion: Maps RGB/CMYK stream definitions into single-channel luminance for stark contrast enhancement.\n- Ink Stroke Flattening: Flattens interactive signatures and freehand annotation paths directly into the core content layer.\n- OCR Text Layer Removal: Synchronously purges hidden searchable text layers to strip metadata tracks and tracking footprints completely.\n- Permission Barrier Unlocker: Bypasses encryption parameters on protected owner-locked source files automatically upon processing.\n\nContact & Support: contact@sidelabs.net`,
+        bug_report_link: "Bug Report",
         lang_label: "Language",
         add_files: "Add Files",
         clear: "Clear",
@@ -264,7 +265,8 @@ const translations = {
         terms_policy_text: `SidePDF 이용약관\n\n1. 약관의 동의\nSidePDF(이하 '서비스')를 이용함으로써 귀하는 본 이용약관에 동의하게 됩니다. 약관에 동의하지 않으실 경우 서비스를 이용하실 수 없습니다.\n\n2. 서비스의 이용\n본 서비스는 브라우저 기반의 로컬 PDF 편집 도구입니다. 개인적 또는 상업적 목적으로 자유롭게 이용하실 수 있습니다. 모든 파일 처리는 이용자의 웹 브라우저 내에서만 안전하게 실행되므로, 원본 파일의 보관 책임은 이용자에게 있습니다.\n\n3. 보증의 부인\n본 서비스는 '있는 그대로(as is)' 제공되며, 명시적이거나 묵시적인 어떠한 보증도 제공하지 않습니다. 서비스가 중단 없이 작동하거나 오류가 없을 것임을 보증하지 않습니다.\n\n4. 책임의 제한\n서비스 운영자는 이용자가 서비스를 이용함에 따라 발생한 어떠한 직접적, 간접적, 부수적 손해에 대해서도 책임을 지지 않습니다.\n\n5. 준거법\n본 약관은 서비스 운영진이 속한 관할 지역의 법률에 따라 해석되고 규율됩니다.\n\n문의: contact@sidelabs.net`,
         about_link: "소개",
         about_modal_title: "소개",
-        about_policy_text: `SidePDF 소개\n\nSidePDF는 SideLabs가 개발한 서버리스 기반의 100% 로컬 클라이언트 사이드 PDF 유틸리티 플랫폼입니다.\n\n저희의 미션은 사용자의 민감한 문서 데이터가 외부 서버로 절대 유출되지 않도록, 브라우저 샌드박스 내부(RAM 및 CPU)에서 모든 최적화, 병합, 분할 연산을 완벽하게 처리하는 보안 환경을 구축하는 것입니다. WebAssembly 기술을 적용하여 파일 업로드 대기 시간을 제로로 줄이고 완벽한 개인정보 보호를 보장합니다.\n\nSideLabs는 사용자의 프라이버시를 존중하고 클라이언트 사이드 컴퓨팅 파워를 극적화하는 제로트러스트 보안 웹 도구를 전문적으로 설계합니다.\n\n문의: contact@sidelabs.net`,
+        about_policy_text: `SidePDF 소개\n\nSidePDF는 SideLabs가 개발한 서버리스 기반의 100% 로컬 클라이언트 사이드 PDF 유틸리티 플랫폼입니다.\n\n저희의 미션은 사용자의 민감한 문서 데이터가 외부 서버로 절대 유출되지 않도록, 브라우저 샌드박스 내부(RAM 및 CPU)에서 모든 최적화, 병합, 분할 연산을 완벽하게 처리하는 보안 환경을 구축하는 것입니다. WebAssembly 기술을 적용하여 파일 업로드 대기 시간을 제로로 줄이고 완벽한 개인정보 보호를 보장합니다.\n\n[주요 기능 개요]\n- PDF 병합 및 분할 (PDF Merge & Split): 여러 PDF와 이미지를 병합하거나 특정 페이지 레이아웃을 순차적으로 추출합니다.\n- 캔버스 크기에 맞춤 / 레터박스 (Fit to Canvas / Letterboxing): 캔버스 크기(A4, Letter, 16:9)에 맞게 비율 왜곡 없이 여백(레터박스)을 보존하여 페이지 크기를 맞추고 정렬합니다.\n- 스마트 이미지 압축 (Smart Image Optimization): 슬라이더 설정에 맞게 고화질 래스터 이미지를 해상도 기반으로 다운샘플링하여 전체 파일 용량을 최적화합니다.\n- 흑백 모드 변환 (B&W / Grayscale Conversion): RGB/CMYK 색상을 1채널 흑백(그레이스케일) 조도 값으로 매핑하여 대조를 강조하고 가독성을 높입니다.\n- 획 일원화 및 플래툰 (Ink Stroke Flattening): 손글씨 주석이나 전자서명 벡터 선 획을 코어 컨텐츠 레이어로 완전히 평평하게 병합(플래튼)합니다.\n- OCR 레이어 제거 (OCR Text Layer Removal): 스캔 문서 내의 숨겨진 검색용 텍스트(OCR) 레이어를 동기적으로 제거하여 불필요한 메타데이터와 용량을 줄입니다.\n- 편집 제한 해제 (Permission Barrier Unlocker): 보안 암호가 설정된 원반 PDF 파일의 인쇄/편집 등 소유자 잠금 제한을 변환 과정에서 자동으로 해제하여 결합합니다.\n\n문의처: contact@sidelabs.net`,
+        bug_report_link: "버그 제보",
         filters_panel_title: "PDF 최적화 및 프로세싱 필터",
         strip_ocr_title: "OCR 텍스트 스트림 제거",
         strip_ocr_desc: "보이지 않는 OCR 텍스트 레이어를 제거하여 용량을 줄입니다.",
@@ -581,6 +583,32 @@ function showEmptyState(isEmpty) {
     }
 }
 
+function generateBugReportLink() {
+    const email = "contact@sidelabs.net";
+    const subject = "[SidePDF Bug Report / 문의]";
+    
+    const ua = navigator.userAgent;
+    let os = "Unknown OS";
+    let browser = "Unknown Browser";
+    
+    if (ua.indexOf("Win") !== -1) os = "Windows";
+    else if (ua.indexOf("Mac") !== -1) os = "macOS";
+    else if (ua.indexOf("X11") !== -1) os = "Linux";
+    else if (ua.indexOf("Linux") !== -1) os = "Linux";
+    else if (ua.indexOf("Android") !== -1) os = "Android";
+    else if (ua.indexOf("iPhone") !== -1) os = "iOS";
+    
+    if (ua.indexOf("Firefox") !== -1) browser = "Firefox";
+    else if (ua.indexOf("SamsungBrowser") !== -1) browser = "Samsung Browser";
+    else if (ua.indexOf("Chrome") !== -1) browser = "Chrome";
+    else if (ua.indexOf("Safari") !== -1) browser = "Safari";
+    else if (ua.indexOf("Edge") !== -1) browser = "Edge";
+
+    const bodyText = `[버그 제보 및 문의 양식]\n\n1. 문의 내용:\n\n\n---------------------------\n[시스템 기술 진단 정보 (자동 채움)]\n- OS 환경: ${os}\n- 브라우저 유형: ${browser}\n- 원본 UserAgent: ${ua}\n\n[개인정보 처리 및 파기 규약]\nSidePDF는 무자본 서버리스 정책에 따라 어떠한 유저 파일도 보관하지 않습니다. 제보 시 첨부되거나 포함된 모든 개인정보 및 기술 식별 세부 데이터는 해당 기술적 문제를 디버깅하고 해결하는 목적 외에는 절대 활용되지 않으며, 문제 해결 즉시 시스템 아카이브에서 원천 파기 및 완전 영구 삭제됨을 엄격히 보장합니다.`;
+    
+    return `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+}
+
 // Action Listeners Wiring
 function wireActionListeners() {
     const fileInput = document.getElementById('file-input');
@@ -720,6 +748,12 @@ function wireActionListeners() {
         e.preventDefault();
         const modal = document.getElementById('about-modal');
         if (modal) modal.classList.remove('visible');
+    });
+
+    document.getElementById('bug-report-trigger')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.location.href = generateBugReportLink();
     });
 }
 

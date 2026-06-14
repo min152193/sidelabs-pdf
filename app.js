@@ -1902,12 +1902,8 @@ async function exportCombined(queueItems, defaultFileName) {
             } else if (item.type === 'image') {
                 let arrayBuffer = uploadedFiles[item.fileId];
                 
-                if (compressEnabled && quality < 1.0) {
-                    arrayBuffer = await compressImageBuffer(arrayBuffer, item.mimeType, 1200, quality);
-                }
-
                 let embedImg;
-                if ((!compressEnabled || quality === 1.0) && item.mimeType === 'image/png') {
+                if (item.mimeType === 'image/png') {
                     embedImg = await outDoc.embedPng(arrayBuffer);
                 } else {
                     embedImg = await outDoc.embedJpg(arrayBuffer);

@@ -2224,13 +2224,9 @@ async function exportSplitAll() {
                     let buf = uploadedFiles[item.fileId];
                     const compressEnabled = document.getElementById('toggle-compress').checked;
                     const quality = parseFloat(document.getElementById('compress-quality').value || '0.9');
-                    
-                    if (compressEnabled && quality < 1.0) {
-                        buf = await compressImageBuffer(buf, item.mimeType, 1200, quality);
-                    }
 
                     let embedImg;
-                    if ((!compressEnabled || quality === 1.0) && item.mimeType === 'image/png') {
+                    if (item.mimeType === 'image/png') {
                         embedImg = await singleDoc.embedPng(buf);
                     } else {
                         embedImg = await singleDoc.embedJpg(buf);
@@ -2280,6 +2276,28 @@ async function exportSplitAll() {
                 }
                 if (grayscaleEnabled) {
                     convertPageToGrayscale(page);
+                }
+
+                // Apply true image downsampling / degradation loop
+                const compressEnabled = document.getElementById('toggle-compress').checked;
+                const quality = parseFloat(document.getElementById('compress-quality').value || '0.9');
+                if (compressEnabled) {
+                    const resources = page.node.Resources();
+                    if (resources) {
+                        const xObjects = resources.get(PDFName.of('XObject'));
+                        if (xObjects instanceof PDFDict) {
+                            for (const [name, ref] of xObjects.entries()) {
+                                const xObject = singleDoc.context.lookup(ref);
+                                if (xObject instanceof PDFRawStream) {
+                                    const subtype = xObject.dict.get(PDFName.of('Subtype'));
+                                    if (subtype === PDFName.of('Image')) {
+                                        const mappedQuality = Math.min(0.7, Math.max(0.5, quality));
+                                        await recompressImageXObject(singleDoc, xObject, mappedQuality);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // White-Label Metadata Override
@@ -2374,6 +2392,7 @@ async function exportSplitAll() {
         await hideLoading();
     }
 }
+
 
 
 // Onboarding Sandbox Generator

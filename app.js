@@ -89,6 +89,7 @@ const translations = {
         orientation: "Orientation",
         orientation_portrait: "Portrait",
         orientation_landscape: "Landscape",
+        compress_notice_text: "💡 Note: Native digital PDFs with selectable text (non-scanned documents) contain no embeddable image data to downsample, so size reduction may be minimal. Compression is highly effective on image-heavy or scanned documents.",
         format: "Format",
         simple_format: "Simple (\"1\", \"2\")",
         page_of_format: "Page of Total (\"Page 1 of 10\")",
@@ -249,6 +250,7 @@ const translations = {
         orientation_portrait: "세로",
         orientation_landscape: "가로",
         compress_warning_text: "주의: 압축 화질을 75% 이하로 너무 낮추면 문서 내 작은 글씨의 가독성이 떨어질 수 있습니다.",
+        compress_notice_text: "💡 안내: 글자 선택 및 복사가 가능한 디지털 원본 PDF(스캔본이 아닌 파일)는 내부에 압축할 이미지가 없어 용량 감소율이 미미하거나 거의 없을 수 있습니다. 이미지가 포함된 파일이나 스캔된 문서에서 극적인 압축 효과가 나타납니다.",
         security_tooltip_text: "SidePDF는 무자본 서버리스 아키텍처로 구현되었습니다. 사용자의 파일은 중앙 서버로 절대 전송되지 않으며, 오직 현재 브라우저의 일시적인 샌드박스 메모리 안에서만 연산된 후 완전히 파기되므로 유출 우려가 0%입니다.",
         how_does_it_work: "보안 원리가 무엇인가요?",
         security_modal_title: "보안 및 개인정보 보호 안내",
@@ -1325,45 +1327,147 @@ async function compressImageBuffer(arrayBuffer, mimeType, maxDim, quality) {
     });
 }
 
-async function rasterizePdfPageToJpg(arrayBuffer, password, pageIndex, quality) {
-    const pdfDocJs = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0), password }).promise;
+async function recompressImageXObject(pdfDoc, xObject, quality) {
     try {
-        const page = await pdfDocJs.getPage(pageIndex + 1);
-        const scale = 1.5; // High quality scale
-        const viewport = page.getViewport({ scale });
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        
-        await page.render({
-            canvasContext: ctx,
-            viewport: viewport
-        }).promise;
-        
-        const imgBytes = await new Promise((resolve) => {
-            canvas.toBlob((cblob) => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    resolve(new Uint8Array(reader.result));
-                    canvas.width = 0;
-                    canvas.height = 0;
+        const width = xObject.dict.get(PDFName.of('Width'))?.numberValue || xObject.dict.get(PDFName.of('Width'))?.value;
+        const height = xObject.dict.get(PDFName.of('Height'))?.numberValue || xObject.dict.get(PDFName.of('Height'))?.value;
+        if (!width || !height) return;
+
+        const filterObj = xObject.dict.get(PDFName.of('Filter'));
+        let isDCT = false;
+        if (filterObj === PDFName.of('DCTDecode')) {
+            isDCT = true;
+        } else if (filterObj instanceof PDFArray) {
+            isDCT = filterObj.asArray().some(f => f === PDFName.of('DCTDecode'));
+        }
+
+        const targetStream = xObject.stream || xObject;
+        const uncompressedBytes = isDCT ? targetStream.contents : PDFLib.decodePDFRawStream(targetStream).getBytes();
+
+        let compressedBytes;
+        if (isDCT) {
+            compressedBytes = await new Promise((resolve, reject) => {
+                const blob = new Blob([uncompressedBytes], { type: 'image/jpeg' });
+                const url = URL.createObjectURL(blob);
+                const img = new Image();
+                img.onload = () => {
+                    URL.revokeObjectURL(url);
+                    let w = img.width;
+                    let h = img.height;
+                    if (w > 1500 || h > 1500) {
+                        if (w > h) {
+                            h = Math.round((h * 1500) / w);
+                            w = 1500;
+                        } else {
+                            w = Math.round((w * 1500) / h);
+                            h = 1500;
+                        }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    canvas.toBlob((cblob) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            resolve(new Uint8Array(reader.result));
+                            canvas.width = 0;
+                            canvas.height = 0;
+                        };
+                        reader.readAsArrayBuffer(cblob);
+                    }, 'image/jpeg', quality);
                 };
-                reader.readAsArrayBuffer(cblob);
-            }, 'image/jpeg', quality);
-        });
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error("Image decode fail"));
+                };
+                img.src = url;
+            });
+        } else {
+            const colorSpace = xObject.dict.get(PDFName.of('ColorSpace'));
+            const isRGB = colorSpace === PDFName.of('DeviceRGB');
+            const isGray = colorSpace === PDFName.of('DeviceGray');
+
+            compressedBytes = await new Promise((resolve) => {
+                let w = width;
+                let h = height;
+                if (w > 1500 || h > 1500) {
+                    if (w > h) {
+                        h = Math.round((h * 1500) / w);
+                        w = 1500;
+                    } else {
+                        w = Math.round((w * 1500) / h);
+                        h = 1500;
+                    }
+                }
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                const tempCtx = tempCanvas.getContext('2d');
+                const imgData = tempCtx.createImageData(width, height);
+
+                if (isRGB && uncompressedBytes.length >= width * height * 3) {
+                    for (let i = 0; i < width * height; i++) {
+                        imgData.data[i * 4] = uncompressedBytes[i * 3];
+                        imgData.data[i * 4 + 1] = uncompressedBytes[i * 3 + 1];
+                        imgData.data[i * 4 + 2] = uncompressedBytes[i * 3 + 2];
+                        imgData.data[i * 4 + 3] = 255;
+                    }
+                } else if (isGray && uncompressedBytes.length >= width * height) {
+                    for (let i = 0; i < width * height; i++) {
+                        const g = uncompressedBytes[i];
+                        imgData.data[i * 4] = g;
+                        imgData.data[i * 4 + 1] = g;
+                        imgData.data[i * 4 + 2] = g;
+                        imgData.data[i * 4 + 3] = 255;
+                    }
+                } else {
+                    for (let i = 0; i < width * height; i++) {
+                        imgData.data[i * 4] = 128;
+                        imgData.data[i * 4 + 1] = 128;
+                        imgData.data[i * 4 + 2] = 128;
+                        imgData.data[i * 4 + 3] = 255;
+                    }
+                }
+                tempCtx.putImageData(imgData, 0, 0);
+
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(tempCanvas, 0, 0, w, h);
+                canvas.toBlob((cblob) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        resolve(new Uint8Array(reader.result));
+                        canvas.width = 0;
+                        canvas.height = 0;
+                        tempCanvas.width = 0;
+                        tempCanvas.height = 0;
+                    };
+                    reader.readAsArrayBuffer(cblob);
+                }, 'image/jpeg', quality);
+            });
+        }
+
+        targetStream.contents = compressedBytes;
+        targetStream.dict.set(PDFName.of('Length'), PDFNumber.of(compressedBytes.length));
+        targetStream.dict.set(PDFName.of('Filter'), PDFName.of('DCTDecode'));
+        targetStream.dict.delete(PDFName.of('DecodeParms'));
         
-        return {
-            bytes: imgBytes,
-            width: viewport.width,
-            height: viewport.height
-        };
-    } finally {
-        try {
-            await pdfDocJs.destroy();
-        } catch (e) {}
+        if (xObject.stream) {
+            xObject.stream.contents = compressedBytes;
+            xObject.stream.dict.set(PDFName.of('Length'), PDFNumber.of(compressedBytes.length));
+            xObject.stream.dict.set(PDFName.of('Filter'), PDFName.of('DCTDecode'));
+            xObject.stream.dict.delete(PDFName.of('DecodeParms'));
+        }
+        console.log("Image recompressed successfully. Original size:", uncompressedBytes.length, "Compressed size:", compressedBytes.length);
+    } catch (e) {
+        console.warn("Failed to downsample image:", e);
     }
 }
+
 
 
 
@@ -1782,147 +1886,83 @@ async function exportCombined(queueItems, defaultFileName) {
             updateLoadingProgress(Math.round((idx / totalItems) * 60)); 
 
             if (item.type === 'pdf') {
-                if (compressEnabled && quality < 1.0) {
+                if (!loadedDocsPdfLib[item.fileId]) {
                     const arrayBuffer = uploadedFiles[item.fileId];
                     const password = filePasswords[item.fileId] || "";
-                    updateLoading(t('unlocking_assembling', idx + 1, totalItems) + " (Rasterizing)", item.originalName);
+                    // Load buffer directly - no copies!
+                    loadedDocsPdfLib[item.fileId] = await PDFDocument.load(arrayBuffer, { password, ignoreEncryption: true });
+                }
+                const srcDoc = loadedDocsPdfLib[item.fileId];
+                
+                // Pre-embedding resource downsampling loop inside srcDoc context!
+                if (compressEnabled && quality < 1.0) {
+                    const srcPage = srcDoc.getPage(item.pageIndex);
+                    const resources = srcPage.node.Resources();
+                    if (resources) {
+                        const xObjects = resources.get(PDFName.of('XObject'));
+                        if (xObjects instanceof PDFDict) {
+                            for (const [name, ref] of xObjects.entries()) {
+                                const xObject = srcDoc.context.lookup(ref);
+                                if (xObject instanceof PDFRawStream) {
+                                    const subtype = xObject.dict.get(PDFName.of('Subtype'));
+                                    if (subtype === PDFName.of('Image')) {
+                                        await recompressImageXObject(srcDoc, xObject, quality);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (letterboxEnabled) {
+                    const page = outDoc.addPage([targetWidth, targetHeight]);
+                    const embeddedPage = await outDoc.embedPage(srcDoc.getPage(item.pageIndex));
                     
-                    const rasterized = await rasterizePdfPageToJpg(arrayBuffer, password, item.pageIndex, quality);
-                    const embedImg = await outDoc.embedJpg(rasterized.bytes);
+                    const srcPage = srcDoc.getPage(item.pageIndex);
+                    const originalRotation = srcPage.getRotation().angle;
+                    const totalRotation = (originalRotation + item.rotation) % 360;
+                    const srcW = srcPage.getWidth();
+                    const srcH = srcPage.getHeight();
+                    const isRotated = totalRotation === 90 || totalRotation === 270;
+                    const displayW = isRotated ? srcH : srcW;
+                    const displayH = isRotated ? srcW : srcH;
                     
-                    let w = targetWidth;
-                    let h = targetHeight;
-                    if (!letterboxEnabled) {
-                        w = rasterized.width;
-                        h = rasterized.height;
+                    const scale = Math.min(targetWidth / displayW, targetHeight / displayH);
+                    const drawW = srcW * scale;
+                    const drawH = srcH * scale;
+                    
+                    const targetX = (targetWidth - displayW * scale) / 2;
+                    const targetY = (targetHeight - displayH * scale) / 2;
+                    
+                    let drawX = 0;
+                    let drawY = 0;
+                    
+                    if (totalRotation === 0) {
+                        drawX = targetX;
+                        drawY = targetY;
+                    } else if (totalRotation === 90) {
+                        drawX = targetX + displayW * scale;
+                        drawY = targetY;
+                    } else if (totalRotation === 180) {
+                        drawX = targetX + displayW * scale;
+                        drawY = targetY + displayH * scale;
+                    } else if (totalRotation === 270) {
+                        drawX = targetX;
+                        drawY = targetY + displayH * scale;
                     }
                     
-                    const page = outDoc.addPage([w, h]);
-                    
-                    if (letterboxEnabled) {
-                        const isRotated = item.rotation === 90 || item.rotation === 270;
-                        const displayW = isRotated ? rasterized.height : rasterized.width;
-                        const displayH = isRotated ? rasterized.width : rasterized.height;
-                        
-                        const scale = Math.min(targetWidth / displayW, targetHeight / displayH);
-                        const drawW = rasterized.width * scale;
-                        const drawH = rasterized.height * scale;
-                        
-                        const targetX = (targetWidth - displayW * scale) / 2;
-                        const targetY = (targetHeight - displayH * scale) / 2;
-                        
-                        let drawX = 0;
-                        let drawY = 0;
-                        
-                        if (item.rotation === 0) {
-                            drawX = targetX;
-                            drawY = targetY;
-                        } else if (item.rotation === 90) {
-                            drawX = targetX + displayW * scale;
-                            drawY = targetY;
-                        } else if (item.rotation === 180) {
-                            drawX = targetX + displayW * scale;
-                            drawY = targetY + displayH * scale;
-                        } else if (item.rotation === 270) {
-                            drawX = targetX;
-                            drawY = targetY + displayH * scale;
-                        }
-                        
-                        page.drawImage(embedImg, {
-                            x: drawX,
-                            y: drawY,
-                            width: drawW,
-                            height: drawH,
-                            rotate: degrees(item.rotation)
-                        });
-                    } else {
-                        const isRotated = item.rotation === 90 || item.rotation === 270;
-                        const displayW = isRotated ? rasterized.height : rasterized.width;
-                        const displayH = isRotated ? rasterized.width : rasterized.height;
-                        
-                        let drawX = 0;
-                        let drawY = 0;
-                        
-                        if (item.rotation === 0) {
-                            drawX = 0;
-                            drawY = 0;
-                        } else if (item.rotation === 90) {
-                            drawX = displayW;
-                            drawY = 0;
-                        } else if (item.rotation === 180) {
-                            drawX = displayW;
-                            drawY = displayH;
-                        } else if (item.rotation === 270) {
-                            drawX = 0;
-                            drawY = displayH;
-                        }
-                        
-                        page.drawImage(embedImg, {
-                            x: drawX,
-                            y: drawY,
-                            width: rasterized.width,
-                            height: rasterized.height,
-                            rotate: degrees(item.rotation)
-                        });
-                    }
+                    page.drawPage(embeddedPage, {
+                        x: drawX,
+                        y: drawY,
+                        width: drawW,
+                        height: drawH,
+                        rotate: degrees(totalRotation)
+                    });
                 } else {
-                    if (!loadedDocsPdfLib[item.fileId]) {
-                        const arrayBuffer = uploadedFiles[item.fileId];
-                        const password = filePasswords[item.fileId] || "";
-                        loadedDocsPdfLib[item.fileId] = await PDFDocument.load(arrayBuffer, { password, ignoreEncryption: true });
-                    }
-                    const srcDoc = loadedDocsPdfLib[item.fileId];
-                    
-                    if (letterboxEnabled) {
-                        const page = outDoc.addPage([targetWidth, targetHeight]);
-                        const embeddedPage = await outDoc.embedPage(srcDoc.getPage(item.pageIndex));
-                        
-                        const srcPage = srcDoc.getPage(item.pageIndex);
-                        const originalRotation = srcPage.getRotation().angle;
-                        const totalRotation = (originalRotation + item.rotation) % 360;
-                        const srcW = srcPage.getWidth();
-                        const srcH = srcPage.getHeight();
-                        const isRotated = totalRotation === 90 || totalRotation === 270;
-                        const displayW = isRotated ? srcH : srcW;
-                        const displayH = isRotated ? srcW : srcH;
-                        
-                        const scale = Math.min(targetWidth / displayW, targetHeight / displayH);
-                        const drawW = srcW * scale;
-                        const drawH = srcH * scale;
-                        
-                        const targetX = (targetWidth - displayW * scale) / 2;
-                        const targetY = (targetHeight - displayH * scale) / 2;
-                        
-                        let drawX = 0;
-                        let drawY = 0;
-                        
-                        if (totalRotation === 0) {
-                            drawX = targetX;
-                            drawY = targetY;
-                        } else if (totalRotation === 90) {
-                            drawX = targetX + displayW * scale;
-                            drawY = targetY;
-                        } else if (totalRotation === 180) {
-                            drawX = targetX + displayW * scale;
-                            drawY = targetY + displayH * scale;
-                        } else if (totalRotation === 270) {
-                            drawX = targetX;
-                            drawY = targetY + displayH * scale;
-                        }
-                        
-                        page.drawPage(embeddedPage, {
-                            x: drawX,
-                            y: drawY,
-                            width: drawW,
-                            height: drawH,
-                            rotate: degrees(totalRotation)
-                        });
-                    } else {
-                        const [copiedPage] = await outDoc.copyPages(srcDoc, [item.pageIndex]);
-                        const originalRotation = copiedPage.getRotation().angle;
-                        copiedPage.setRotation(degrees((originalRotation + item.rotation) % 360));
-                        outDoc.addPage(copiedPage);
-                    }
+                    const [copiedPage] = await outDoc.copyPages(srcDoc, [item.pageIndex]);
+                    const originalRotation = copiedPage.getRotation().angle;
+                    copiedPage.setRotation(degrees((originalRotation + item.rotation) % 360));
+                    outDoc.addPage(copiedPage);
                 }
             } else if (item.type === 'image') {
                 let arrayBuffer = uploadedFiles[item.fileId];
@@ -2212,55 +2252,40 @@ async function exportSplitAll() {
                 const singleDoc = await PDFDocument.create();
 
                 if (item.type === 'pdf') {
-                    if (compressEnabled && quality < 1.0) {
+                    if (!loadedDocsPdfLib[item.fileId]) {
                         const buf = uploadedFiles[item.fileId];
                         const password = filePasswords[item.fileId] || "";
-                        
-                        const rasterized = await rasterizePdfPageToJpg(buf, password, item.pageIndex, quality);
-                        const embedImg = await singleDoc.embedJpg(rasterized.bytes);
-                        
-                        // Fit to standard A4 (Letterbox)
-                        const A4_WIDTH = 595.28;
-                        const A4_HEIGHT = 841.89;
-                        const page = singleDoc.addPage([A4_WIDTH, A4_HEIGHT]);
-
-                        const imgRatio = embedImg.width / embedImg.height;
-                        const pageRatio = A4_WIDTH / A4_HEIGHT;
-                        let width, height, x, y;
-
-                        if (imgRatio > pageRatio) {
-                            width = A4_WIDTH;
-                            height = A4_WIDTH / imgRatio;
-                            x = 0;
-                            y = (A4_HEIGHT - height) / 2;
-                        } else {
-                            height = A4_HEIGHT;
-                            width = A4_HEIGHT * imgRatio;
-                            x = (A4_WIDTH - width) / 2;
-                            y = 0;
-                        }
-
-                        page.drawImage(embedImg, { x, y, width, height });
-
-                        if (item.rotation !== 0) {
-                            page.setRotation(degrees(item.rotation));
-                        }
-                    } else {
-                        if (!loadedDocsPdfLib[item.fileId]) {
-                            const buf = uploadedFiles[item.fileId];
-                            const password = filePasswords[item.fileId] || "";
-                            // Load buffer directly - no copies!
-                            loadedDocsPdfLib[item.fileId] = await PDFDocument.load(buf, { password, ignoreEncryption: true });
-                        }
-                        const srcDoc = loadedDocsPdfLib[item.fileId];
-                        const [copiedPage] = await singleDoc.copyPages(srcDoc, [item.pageIndex]);
-
-                        singleDoc.addPage(copiedPage);
-
-                        const originalRotation = copiedPage.getRotation().angle;
-                        const addedPage = singleDoc.getPages()[0];
-                        addedPage.setRotation(degrees((originalRotation + item.rotation) % 360));
+                        // Load buffer directly - no copies!
+                        loadedDocsPdfLib[item.fileId] = await PDFDocument.load(buf, { password, ignoreEncryption: true });
                     }
+                    const srcDoc = loadedDocsPdfLib[item.fileId];
+                    
+                    // Pre-embedding resource downsampling loop inside srcDoc context!
+                    if (compressEnabled && quality < 1.0) {
+                        const srcPage = srcDoc.getPage(item.pageIndex);
+                        const resources = srcPage.node.Resources();
+                        if (resources) {
+                            const xObjects = resources.get(PDFName.of('XObject'));
+                            if (xObjects instanceof PDFDict) {
+                                for (const [name, ref] of xObjects.entries()) {
+                                    const xObject = srcDoc.context.lookup(ref);
+                                    if (xObject instanceof PDFRawStream) {
+                                        const subtype = xObject.dict.get(PDFName.of('Subtype'));
+                                        if (subtype === PDFName.of('Image')) {
+                                            await recompressImageXObject(srcDoc, xObject, quality);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    const [copiedPage] = await singleDoc.copyPages(srcDoc, [item.pageIndex]);
+                    singleDoc.addPage(copiedPage);
+
+                    const originalRotation = copiedPage.getRotation().angle;
+                    const addedPage = singleDoc.getPages()[0];
+                    addedPage.setRotation(degrees((originalRotation + item.rotation) % 360));
                 } else if (item.type === 'image') {
                     let buf = uploadedFiles[item.fileId];
                     if (compressEnabled && quality < 1.0) {
